@@ -113,20 +113,32 @@ defmodule Durango.Dsl.DotAccess do
     |> put_modifier(key)
     |> from_quoted(rest)
   end
-  def from_quoted(%DotAccess{} = dot, {{:., _, [Access, :get]}, _, [rest, %BoundVar{} = bv]}) do
+  def from_quoted(%DotAccess{} = dot, {{:., _, [Access, :get]}, _, [rest, other]}) do
+    dot
+    |> from_quoted(other)
+    |> from_quoted(rest)
+  end
+  def from_quoted(%DotAccess{} = dot, {{:., _, [Access, :get]}, _, %BoundVar{} = bv}) do
     dot
     |> put_attrs({:bound_var, bv})
-    |> from_quoted(rest)
   end
-  def from_quoted(%DotAccess{} = dot, {{:., _, [rest, attr]}, _, []}) do
+  def from_quoted(%DotAccess{} = dot, {{:., _, [rest1, attr]}, _, rest2}) do
     dot
-    |> put_attrs({:dot, attr})
-    |> from_quoted(rest)
+    # |> put_attrs({:dot, attr})
+    |> from_quoted(attr)
+    |> from_quoted(rest1)
+    |> from_quoted(rest2)
   end
-  def from_quoted(%DotAccess{} = dot, {{:., _, [rest, attr]}, _, []}) do
+  def from_quoted(%DotAccess{} = dot, []) do
     dot
-    |> put_attrs({:dot, attr})
-    |> from_quoted(rest)
+  end
+  def from_quoted(%DotAccess{} = dot, key) when is_atom(key) do
+    dot
+    |> put_attrs({:base, key})
+  end
+  def from_quoted(%DotAccess{} = dot, %BoundVar{} = bv) do
+    dot
+    |> put_attrs({:bound_var, bv})
   end
   def from_quoted(%DotAccess{} = dot, {base, _meta, ctx}) when is_atom(base) and is_atom(ctx) do
     attrs =

@@ -100,6 +100,15 @@ defmodule Durango.Query do
     |> parse_expr(expr)
     |> parse_query(rest)
   end
+  def parse_query(%Query{} = q, [{:let, {:=, _, [labels, rest1]}} | rest2]) do
+    labels = extract_labels(labels)
+    q
+    |> append_tokens("LET")
+    |> append_tokens(labels)
+    |> append_tokens("=")
+    |> parse_expr(rest1)
+    |> parse_query(rest2)
+  end
   def parse_query(%Query{} = q, [{:filter, expr} | rest ]) do
     q
     |> append_tokens("FILTER")

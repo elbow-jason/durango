@@ -283,6 +283,23 @@ defmodule DurangoQueryTest do
     ])
     assert to_string(q) == expected
     assert q.local_variables == [:u] # current is only available in the object
+  end
 
+
+  test "query can handle let statement" do
+    expected = normalize """
+
+    LET doc = { foo: { bar: "baz" } }
+
+    RETURN doc[@key1][@key2]
+
+    """
+    key1 = :foo
+    key2 = :baz
+    q = Query.query([
+      let: doc = %{foo: %{bar: "baz"}},
+      return: doc[key1][key2]
+    ])
+    assert to_string(q) == "Blep"
   end
 end
