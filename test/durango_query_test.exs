@@ -104,7 +104,7 @@ defmodule DurangoQueryTest do
     q = Query.query([for: a in :thing, return: a])
     assert to_string(q) == "FOR a IN thing RETURN a"
   end
-  @tag current: true
+
   test "query can parse a multi-variable for expression" do
     q = Query.query([
       for: {a, b, c} in :things,
@@ -257,4 +257,32 @@ defmodule DurangoQueryTest do
     assert q.bound_variables == %{:some_key =>%Durango.Dsl.BoundVar{key: :some_key, validations: [], value: "name"}}
   end
 
+
+  @tag current: true
+  test "query can handle a subquery and CURRENT variable" do
+    expected = normalize """
+      FOR u IN users
+        RETURN {
+            name: u.name,
+            friends: u.friends[* FILTER CONTAINS(CURRENT.name, "a") AND CURRENT.age > 40
+                LIMIT 2
+                RETURN CONCAT(CURRENT.name, " is ", CURRENT.age)
+            ]
+        }
+    """
+    q = Query.query([
+      for: u in :users,
+        return: %{
+          name: u.name,
+          friends: inline(u.friends, [
+            filter: contains(CURRENT.name, "a") and CURRENT.age > 40,
+            limit: 2,
+            return: concat(CURRENT.name, " is ", CURRENT.age)
+          ])
+        }
+    ])
+    assert to_string(q) == expected
+    assert q.local_variables == [:u] # current is only available in the object
+
+  end
 end

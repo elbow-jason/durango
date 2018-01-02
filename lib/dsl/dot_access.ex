@@ -136,5 +136,13 @@ defmodule Durango.Dsl.DotAccess do
       |> Enum.reverse
     %{ dot | attrs: attrs }
   end
+  def from_quoted(%DotAccess{} = dot,  {:__aliases__, _, [base]}) when is_atom(base) do
+    attrs =
+      dot
+      |> put_attrs({:base, base})
+      |> Map.get(:attrs)
+      |> Enum.reverse
+    %{ dot | attrs: attrs }
+  end
 
 end

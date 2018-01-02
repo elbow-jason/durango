@@ -9,10 +9,6 @@ defmodule Durango.Document do
 
   defmacro document(collection, block) when is_atom(collection) do
     quote do
-      def __document__() do
-
-      end
-
       def __document__(:is_document?) do
         true
       end

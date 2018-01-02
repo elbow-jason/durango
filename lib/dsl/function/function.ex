@@ -5,7 +5,7 @@ defmodule Durango.Dsl.Function do
   This module parses and renders functions.
   """
 
-  def validate!({_name, low..high}, args) when length(args) <= low and length(args) >= high do
+  def validate!({_name, low..high}, args) when length(args) >= low and length(args) <= high do
     nil
   end
   def validate!({name, count}, args) when is_integer(count) do

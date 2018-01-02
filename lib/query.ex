@@ -27,14 +27,6 @@ defmodule Durango.Query do
     last_reserved_word:   nil,
   ]
 
-  # def ensure_in_locals!(%Query{local_variables: locals}, other_var) do
-  #   if not other_var in locals do
-  #     msg = "Durango.Query encountered an unscoped variable: #{inspect other_var}. "
-  #     msg = msg <> "Scoped variables are: #{inspect locals}."
-  #     raise CompileError, description: msg
-  #   end
-  # end
-
   def preprocess_ast(ast) do
     {ast, bound} = BoundVar.from_quoted(ast)
     ast = DotAccess.from_quoted(ast)
@@ -198,6 +190,15 @@ defmodule Durango.Query do
   def parse_expr(%Query{} = q, bool) when is_boolean(bool) do
     q
     |> append_tokens(to_string(bool))
+  end
+  def parse_expr(%Query{} = q, {:inline, _, [%DotAccess{} = dot, sub_query]}) do
+    # https://docs.arangodb.com/3.3/AQL/Advanced/ArrayOperators.html#inline-expressions
+    token = DotAccess.to_aql(dot)
+    q
+    |> put_local_var(:CURRENT)
+    |> append_tokens(token<>"[*")
+    |> parse_query(sub_query)
+    |> append_tokens("]")
   end
 
 
