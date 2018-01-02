@@ -298,8 +298,8 @@ defmodule DurangoQueryTest do
     key2 = :baz
     q = Query.query([
       let: doc = %{foo: %{bar: "baz"}},
-      return: doc[key1][key2]
+      return: doc,
     ])
-    assert to_string(q) == "Blep"
+    assert to_string(q) == "LET doc = { foo: { bar: \"baz\" } } RETURN doc"
   end
 end

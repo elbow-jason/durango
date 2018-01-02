@@ -114,8 +114,18 @@ defmodule Durango.Dsl.DotAccess do
     |> from_quoted(rest)
   end
   def from_quoted(%DotAccess{} = dot, {{:., _, [Access, :get]}, _, [rest, other]}) do
+    attr =
+      %DotAccess{}
+      |> from_quoted(other)
+      |> Map.get(:attrs)
+      |> case do
+        [{:bound_var, _} = item] ->
+          item
+        [{_type, key}] ->
+          {:bracket, key}
+      end
     dot
-    |> from_quoted(other)
+    |> put_attrs(attr)
     |> from_quoted(rest)
   end
   def from_quoted(%DotAccess{} = dot, {{:., _, [Access, :get]}, _, %BoundVar{} = bv}) do
@@ -123,9 +133,16 @@ defmodule Durango.Dsl.DotAccess do
     |> put_attrs({:bound_var, bv})
   end
   def from_quoted(%DotAccess{} = dot, {{:., _, [rest1, attr]}, _, rest2}) do
+    typed_attr =
+      %DotAccess{}
+      |> from_quoted(attr)
+      |> Map.get(:attrs)
+      |> case do
+        [{_type, key}] ->
+          {:dot, key}
+      end
     dot
-    # |> put_attrs({:dot, attr})
-    |> from_quoted(attr)
+    |> put_attrs(typed_attr)
     |> from_quoted(rest1)
     |> from_quoted(rest2)
   end
