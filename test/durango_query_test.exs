@@ -257,8 +257,6 @@ defmodule DurangoQueryTest do
     assert q.bound_variables == %{:some_key =>%Durango.Dsl.BoundVar{key: :some_key, validations: [], value: "name"}}
   end
 
-
-  @tag current: true
   test "query can handle a subquery and CURRENT variable" do
     expected = normalize """
       FOR u IN users
@@ -285,7 +283,6 @@ defmodule DurangoQueryTest do
     assert q.local_variables == [:u] # current is only available in the object
   end
 
-
   test "query can handle let statement" do
     expected = normalize """
     LET doc = { foo: { bar: "baz" } }
@@ -297,4 +294,35 @@ defmodule DurangoQueryTest do
     ])
     assert to_string(q) == expected
   end
+
+  test "query can handle stringy bracket access" do
+    expected = normalize """
+    FOR u IN users RETURN u["details"]["name"]
+    """
+    q = Query.query([
+      for: u in :users,
+      return: u["details"]["name"],
+    ])
+    assert to_string(q) == expected
+  end
+
+  @tag current: true
+  test "query can handle multi pinned-var bracket access" do
+    expected = normalize """
+    LET doc = { foo: { bar: "baz" } }
+    RETURN doc[@key1][@key2]
+    """
+    key1 = :foo
+    key2 = :bar
+    q = Query.query([
+      let: doc = %{foo: %{bar: "baz"}},
+      return: doc[^key1][^key2],
+    ])
+    assert to_string(q) == expected
+    assert q.bound_variables == %{
+      key1: %Durango.Dsl.BoundVar{key: :key1, validations: [], value: :foo},
+      key2: %Durango.Dsl.BoundVar{key: :key2, validations: [], value: :bar},
+    }
+  end
+
 end

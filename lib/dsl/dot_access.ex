@@ -103,8 +103,7 @@ defmodule Durango.Dsl.DotAccess do
       end
     end
   end
-
-  def from_quoted({{:., _, [_ | rest ]}, _, []} = ast) when length(rest) > 0 do
+  def from_quoted({{:., _, [_ | rest ]}, _, _} = ast) when length(rest) > 0 do
     from_quoted(%DotAccess{ast: ast}, ast)
   end
   def from_quoted(%DotAccess{} = dot, {{:., _, [Access, :get]}, _, [rest, key]}) when is_integer(key) when is_atom(key) when is_binary(key) do
