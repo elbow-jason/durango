@@ -65,7 +65,7 @@ defmodule Durango.Query do
   def put_local_var(%Query{local_variables: locals} = q, local) when is_atom(local) do
     %{ q | local_variables: [local | locals] |> Enum.uniq }
   end
-  def put_local_var(%Query{local_variables: locals} = q, others) when is_list(others) do
+  def put_local_var(%Query{} = q, others) when is_list(others) do
     Enum.reduce(others, q, fn item, q_acc ->
       put_local_var(q_acc, item)
     end)
@@ -92,7 +92,7 @@ defmodule Durango.Query do
   defp put_collection(%Query{collections: collections} = q, label, module) when is_atom(label) and is_atom(module) do
     %{ q | collections: [ {label, module} | collections] }
   end
-  defp put_collection(%Query{collections: collections} = q, labels, module) when is_list(labels) and is_atom(module) do
+  defp put_collection(%Query{} = q, labels, module) when is_list(labels) and is_atom(module) do
     Enum.reduce(labels, q, fn l, q_acc -> put_collection(q_acc, l, module) end)
   end
 
@@ -114,7 +114,7 @@ defmodule Durango.Query do
     |> parse_expr(expr)
     |> parse_query(rest)
   end
-  def parse_query(%Query{} = q, [{:for, {:in, _, [labels, collection]}} | rest ] = whole) do
+  def parse_query(%Query{} = q, [{:for, {:in, _, [labels, collection]}} | rest ]) do
     labels = extract_labels(labels)
     q
     |> append_tokens(["FOR", stringify(labels, ", "), "IN", stringify(collection)])
@@ -199,6 +199,7 @@ defmodule Durango.Query do
     q
     |> append_tokens(to_string(bool))
   end
+
 
   @reserved_words ReservedWord.list_macro()
   @operators Operators.list_macro()

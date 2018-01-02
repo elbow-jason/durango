@@ -5,29 +5,48 @@ defmodule DurangoDslDotAccessTest do
 
   test "from_quoted can parse a multi dot accessed AST" do
     ast = quote do u.details.name end
-    expected = %Durango.Dsl.DotAccess{attrs: [{:base, :u}, {:dot, :details}, {:dot, :name}]}
+    dot_ast = {{:., [], [{{:., [], [{:u, [], DurangoDslDotAccessTest}, :details]}, [
+], []}, :name]}, [], []}
+    expected = %Durango.Dsl.DotAccess{
+      attrs: [{:base, :u}, {:dot, :details}, {:dot, :name}],
+      ast: dot_ast,
+    }
     assert DotAccess.from_quoted(ast) == expected
   end
 
   test "from_quoted can parse any AST 1" do
     ast = quote do %{name: u.age} end
-    expected = {:%{}, [], [name: %Durango.Dsl.DotAccess{attrs:  [{:base, :u}, {:dot, :age}]}]}
+    dot_ast = {{:., [], [{:u, [], DurangoDslDotAccessTest}, :age]}, [], []}
+    dot = %Durango.Dsl.DotAccess{
+      attrs:  [{:base, :u}, {:dot, :age}],
+      ast:    dot_ast,
+    }
+    expected = {:%{}, [], [name: dot]}
     assert DotAccess.from_quoted(ast) == expected
   end
 
   test "from_quoted can parse any AST 2" do
     ast = quote do {u.age} end
-    expected = {:{}, [], [%Durango.Dsl.DotAccess{attrs:  [{:base, :u}, {:dot, :age}]}]}
+    dot_ast = {{:., [], [{:u, [], DurangoDslDotAccessTest}, :age]}, [], []}
+    dot = %Durango.Dsl.DotAccess{
+      attrs: [{:base, :u}, {:dot, :age}],
+      ast: dot_ast,
+    }
+    expected = {:{}, [], [dot]}
     assert DotAccess.from_quoted(ast) == expected
   end
 
 
   test "from_quoted can parse any AST 3" do
     ast = quote do [for: u, in: :users, return: u.age] end
+    dot_ast = {{:., [], [{:u, [], DurangoDslDotAccessTest}, :age]}, [], []}
     expected = [
       for: {:u, [], DurangoDslDotAccessTest},
       in: :users,
-      return: %Durango.Dsl.DotAccess{attrs: [{:base, :u}, {:dot, :age}]},
+      return: %Durango.Dsl.DotAccess{
+        attrs: [{:base, :u}, {:dot, :age}],
+        ast: dot_ast,
+      },
     ]
     assert DotAccess.from_quoted(ast) == expected
   end

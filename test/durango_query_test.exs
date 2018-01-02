@@ -4,6 +4,12 @@ defmodule DurangoQueryTest do
   require Durango.Query
   alias Durango.Query
 
+  def normalize(string) do
+    string
+    |> String.replace(~r/\s{1,}/, " ")
+    |> String.trim
+  end
+
   test "query can parse a for and return" do
     assert [
       for: p,
@@ -109,7 +115,7 @@ defmodule DurangoQueryTest do
   end
 
   test "query can parse a long query" do
-    expected = """
+    expected = normalize """
       FOR meetup IN meetups
         FILTER "NOSQL" IN meetup.topics
         FOR city IN OUTBOUND meetup held_in
@@ -120,8 +126,7 @@ defmodule DurangoQueryTest do
               INSERT { email: programmer.email, meetup: meetup._key, city: cname.name }
               INTO invitations
     """
-    |> String.replace(~r/\s{1,}/, " ")
-    |> String.trim
+
 
     q = Query.query([
       for: meetup, in: :meetups,
@@ -142,15 +147,14 @@ defmodule DurangoQueryTest do
   end
 
   test "query can parse another long query" do
-    expected = """
+    expected = normalize """
         FOR v, e, p IN 1..5 OUTBOUND "circles/A" GRAPH "traversalGraph"
       FILTER p.edges[0].theTruth == true
          AND p.edges[1].theFalse == false
       FILTER p.vertices[1]._key == "G"
       RETURN p
     """
-    |> String.replace(~r/\s+/, " ")
-    |> String.trim
+
     q = Query.query([
       for: {v, e, p} in 1..5,
       outbound: "circles/A",
@@ -160,7 +164,97 @@ defmodule DurangoQueryTest do
       return: p
     ])
     assert to_string(q) == expected
+  end
 
+  test "query can handle an interpolated dot access" do
+    my_map = %{name: "Jason"}
+    q = Query.query(return: ^my_map.name)
+    assert to_string(q) == "RETURN @my_map_name"
+    assert q.bound_variables == %{"my_map_name" => %Durango.Dsl.BoundVar{key: "my_map_name", validations: [], value: "Jason"}}
+  end
+
+  test "query can handle star bracket access [:ALL]" do
+    expected = normalize """
+      FOR v, e, p
+      IN 1..5
+      OUTBOUND "circles/A"
+      GRAPH "traversalGraph"
+      FILTER p.edges[*].theTruth ALL == true
+      RETURN p
+    """
+    q = Query.query([
+      for: {v, e, p},
+      in:  1..5,
+      outbound: "circles/A",
+      graph: "traversalGraph",
+      filter: p.edges[:ALL].theTruth == true,
+      return: p,
+    ])
+    assert to_string(q) == expected
+  end
+
+  test "query can handle star bracket access [:ANY]" do
+    expected = normalize """
+      FOR v, e, p
+      IN 1..5
+      OUTBOUND "circles/A"
+      GRAPH "traversalGraph"
+      FILTER p.edges[*].theTruth ANY == true
+      RETURN p
+    """
+    q = Query.query([
+      for: {v, e, p},
+      in:  1..5,
+      outbound: "circles/A",
+      graph: "traversalGraph",
+      filter: p.edges[:ANY].theTruth == true,
+      return: p,
+    ])
+    assert to_string(q) == expected
+
+  end
+
+  test "query can handle star bracket access [:NONE]" do
+    expected = normalize """
+      FOR v, e, p
+      IN 1..5
+      OUTBOUND "circles/A"
+      GRAPH "traversalGraph"
+      FILTER p.edges[*].theTruth NONE == true
+      RETURN p
+    """
+    q = Query.query([
+      for: {v, e, p},
+      in:  1..5,
+      outbound: "circles/A",
+      graph: "traversalGraph",
+      filter: p.edges[:NONE].theTruth == true,
+      return: p,
+    ])
+    assert to_string(q) == expected
+  end
+
+
+  test "query can handle interpolated bracket_access [^some_var]" do
+    some_key = "name"
+    expected = normalize """
+      FOR v, e, p
+      IN 1..5
+      OUTBOUND "circles/A"
+      GRAPH "traversalGraph"
+      FILTER p.edges[@some_key].theTruth == true
+      RETURN p
+    """
+    q = Query.query([
+      for: {v, e, p},
+      in:  1..5,
+      outbound: "circles/A",
+      graph: "traversalGraph",
+      filter: p.edges[^some_key].theTruth == true,
+      return: p,
+    ])
+    assert to_string(q) == expected
+    assert q.bound_variables == %{:some_key =>%Durango.Dsl.BoundVar{key: :some_key, validations: [], value: "name"}}
   end
 
 end

@@ -69,6 +69,8 @@ defmodule Durango.Dsl.Quoter do
   def to_quoted({atom, meta, args}) when is_atom(atom) and is_list(meta) and is_list(args) do
     {atom, meta, to_quoted(args) }
   end
-
+  def to_quoted({{:., meta1, args1}, meta2, args2}) when is_list(args2) do
+    {{:., meta1, to_quoted(args1)}, meta2, to_quoted(args2)}
+  end
 
 end

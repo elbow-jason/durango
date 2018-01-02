@@ -1,10 +1,11 @@
 defmodule Durango.Dsl.DotAccess do
-  alias Durango.Dsl.DotAccess
-
+  alias Durango.Dsl.{DotAccess, BoundVar}
   use Durango.Dsl.Quoter
 
   defstruct [
     attrs: [],
+    ast: nil,
+    modifier: nil,
   ]
 
   def get_base(%DotAccess{attrs: [ base | _ ]}) do
@@ -14,6 +15,16 @@ defmodule Durango.Dsl.DotAccess do
     nil
   end
 
+  @modifiers [:ALL, :ANY, :NONE]
+  def put_modifier(%DotAccess{modifier: nil} = dot, modifier) when modifier in @modifiers do
+    %{ dot | modifier: modifier }
+  end
+  def put_modifier(%DotAccess{} = dot, _) do
+    dot
+  end
+
+
+  @types [:bracket, :dot, :base, :bound_var]
   @doc """
     iex> alias Durango.Dsl.DotAccess
     Durango.Dsl.DotAccess
@@ -25,28 +36,46 @@ defmodule Durango.Dsl.DotAccess do
 
     iex> %Durango.Dsl.DotAccess{} |> Durango.Dsl.DotAccess.put_attrs({:bracket, "details"})
     %Durango.Dsl.DotAccess{attrs: [bracket: "details"]}
-
-
   """
-  def put_attrs(%DotAccess{} = dot, {type, _} = attr) when type in [:bracket, :dot, :base] do
+  def put_attrs(%DotAccess{} = dot, {type, _} = attr) when type in @types do
     %{ dot | attrs: dot.attrs ++ [attr]}
   end
 
   @doc """
-  
+
   """
-  def to_aql(%DotAccess{attrs: attrs}) do
+  def to_aql(%DotAccess{attrs: attrs, modifier: modifier}) do
+    extra =
+      case modifier do
+        nil -> ""
+        other -> " " <> to_string(other)
+      end
     attrs
     |> Enum.map(fn
       {:dot, item} ->
         "." <> to_string(item)
       {:bracket, item} when is_integer(item) ->
-        "["<>to_string(item)<>"]"
+        item
+        |> to_string
+        |> wrap_brackets
+      {:bound_var, %BoundVar{} = bv} ->
+        bv
+        |> BoundVar.to_aql
+        |> wrap_brackets
+      {:bracket, item} when item in @modifiers ->
+        wrap_brackets("*")
       {:bracket, item} when is_atom(item) when is_binary(item) ->
-        "["<>Durango.Dsl.String.to_aql(item)<>"]"
+        item
+        |> Durango.Dsl.String.to_aql()
+        |> wrap_brackets
       {:base, item} -> to_string(item)
     end)
     |> Enum.join("")
+    |> Kernel.<>(extra)
+  end
+
+  def wrap_brackets(item) when is_binary(item) do
+    "["<>item<>"]"
   end
 
   defmacro inject_parser() do
@@ -76,16 +105,27 @@ defmodule Durango.Dsl.DotAccess do
   end
 
   def from_quoted({{:., _, [_ | rest ]}, _, []} = ast) when length(rest) > 0 do
-    from_quoted(%DotAccess{}, ast)
+    from_quoted(%DotAccess{ast: ast}, ast)
   end
-  def from_quoted(%DotAccess{} = dot, {{:., _, [Access, :get]}, _, [rest | [ key | []]]}) when is_integer(key) when is_atom(key) when is_binary(key) do
+  def from_quoted(%DotAccess{} = dot, {{:., _, [Access, :get]}, _, [rest, key]}) when is_integer(key) when is_atom(key) when is_binary(key) do
     dot
     |> put_attrs({:bracket, key})
+    |> put_modifier(key)
     |> from_quoted(rest)
   end
-  def from_quoted(%DotAccess{} = dot, {{:., _, [rest | [attrs | []]]}, _, []}) do
+  def from_quoted(%DotAccess{} = dot, {{:., _, [Access, :get]}, _, [rest, %BoundVar{} = bv]}) do
     dot
-    |> put_attrs({:dot, attrs})
+    |> put_attrs({:bound_var, bv})
+    |> from_quoted(rest)
+  end
+  def from_quoted(%DotAccess{} = dot, {{:., _, [rest, attr]}, _, []}) do
+    dot
+    |> put_attrs({:dot, attr})
+    |> from_quoted(rest)
+  end
+  def from_quoted(%DotAccess{} = dot, {{:., _, [rest, attr]}, _, []}) do
+    dot
+    |> put_attrs({:dot, attr})
     |> from_quoted(rest)
   end
   def from_quoted(%DotAccess{} = dot, {base, _meta, ctx}) when is_atom(base) and is_atom(ctx) do

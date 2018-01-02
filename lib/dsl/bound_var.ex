@@ -7,7 +7,7 @@ defmodule Durango.Dsl.BoundVar do
     validations:  [],
   ]
 
-  def new(key, value, validations \\ []) when is_atom(key) and is_list(validations) do
+  def new(key, value, validations \\ []) when (is_atom(key) or is_binary(key)) and is_list(validations) do
     %BoundVar{
       key: key,
       value: value,
@@ -46,7 +46,6 @@ defmodule Durango.Dsl.BoundVar do
     quote do
       alias Durango.Dsl.BoundVar
       alias Durango.Query
-
       def parse_query(%Query{} = q, {:^, _, [{bound_key, _, _} = bound_value]}) when is_atom(bound_key) do
         bv = BoundVar.new(bound_key, bound_value)
         parse_query(q, bv)
@@ -58,6 +57,18 @@ defmodule Durango.Dsl.BoundVar do
         |> Query.append_tokens(token)
       end
 
+      def parse_expr(%Query{} = q, {:^, _, [dot = %Durango.Dsl.DotAccess{ast: bound_value}]}) do
+        bound_key =
+          dot
+          |> Durango.Dsl.DotAccess.to_aql
+          |> String.replace(~r/[\.\[\]]/, "_")
+          |> String.replace(~r/_$/, "")
+        bv = BoundVar.new(bound_key, bound_value)
+        token = BoundVar.to_aql(bv)
+        q
+        |> Query.put_bound_var(bv)
+        |> Query.append_tokens(token)
+      end
       def parse_expr(%Query{} = q, %BoundVar{} = bv) do
         token = BoundVar.to_aql(bv)
         q
@@ -90,6 +101,11 @@ defmodule Durango.Dsl.BoundVar do
     # IO.inspect({atom, args}, label: :reduce_bound_vars)
     {args, bound_vars} = reduce_bound_vars(args, bound_vars)
     {{atom, meta, args}, bound_vars}
+  end
+  def reduce_bound_vars({{atom, meta1, args1}, meta2, args2}, bound_vars) do
+    {args1, bound_vars} = reduce_bound_vars(args1, bound_vars)
+    {args2, bound_vars} = reduce_bound_vars(args2, bound_vars)
+    {{{atom, meta1, args1}, meta2, args2}, bound_vars}
   end
   def reduce_bound_vars({key, value}, bound_vars) do
     {new_value, new_bound} = reduce_bound_vars(value, bound_vars)
