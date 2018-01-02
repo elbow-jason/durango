@@ -288,18 +288,13 @@ defmodule DurangoQueryTest do
 
   test "query can handle let statement" do
     expected = normalize """
-
     LET doc = { foo: { bar: "baz" } }
-
-    RETURN doc[@key1][@key2]
-
+    RETURN doc
     """
-    key1 = :foo
-    key2 = :baz
     q = Query.query([
       let: doc = %{foo: %{bar: "baz"}},
       return: doc,
     ])
-    assert to_string(q) == "LET doc = { foo: { bar: \"baz\" } } RETURN doc"
+    assert to_string(q) == expected
   end
 end
