@@ -325,4 +325,22 @@ defmodule DurangoQueryTest do
     }
   end
 
+  test "query can handle update and with" do
+    expected = normalize """
+    FOR u IN users
+      UPDATE u WITH { gender: TRANSLATE(u.gender, { m: "male", f: "female" }) } IN users
+    """
+    q = Query.query([
+      for: u in :users,
+      update: u, with: %{
+        gender: translate(u.gender, %{m: "male", f: "female"})
+      },
+      in: users,
+    ])
+    # IO.inspect(q.tokens, label: "the_tokens")
+    assert to_string(q) == expected
+  end
+
+
+
 end

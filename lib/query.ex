@@ -109,6 +109,21 @@ defmodule Durango.Query do
     |> parse_expr(rest1)
     |> parse_query(rest2)
   end
+  def parse_query(%Query{} = q, [{:in, expr} | rest ]) do
+    q
+    |> append_tokens("IN")
+    |> parse_expr(expr)
+    |> parse_query(rest)
+  end
+  def parse_query(%Query{} = q, [{:update, labels}, {:with, with_expr} | rest]) do
+    labels = extract_labels(labels)
+    q
+    |> append_tokens("UPDATE")
+    |> append_tokens(labels)
+    |> append_tokens("WITH")
+    |> parse_expr(with_expr)
+    |> parse_query(rest)
+  end
   def parse_query(%Query{} = q, [{:filter, expr} | rest ]) do
     q
     |> append_tokens("FILTER")
@@ -169,7 +184,7 @@ defmodule Durango.Query do
     |> parse_query(rest)
   end
   def parse_query(query, []) do
-    query
+    %{ query | tokens: query.tokens |> Enum.join(" ") |> List.wrap }
   end
 
   defp ensure_in_locals!(%Query{local_variables: locals}, item) do
