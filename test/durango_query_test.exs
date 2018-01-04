@@ -735,10 +735,10 @@ defmodule DurangoQueryTest do
         city: city
       }
     ])
-
     assert to_string(q) == expected
-
   end
+
+
   test "query can handle a simple COLLECT INTO" do
     expected = normalize """
     FOR u IN users
@@ -748,7 +748,6 @@ defmodule DurangoQueryTest do
       users_in_city: users_in_city
     }
     """
-
     q = Durango.query([
       for: u in :users,
       collect: city = u.city,
@@ -758,10 +757,84 @@ defmodule DurangoQueryTest do
         users_in_city: users_in_city,
       }
     ])
-
     assert to_string(q) == expected
-
   end
+
+  test "query can handle a simple COLLECT INTO with multiple variables" do
+    expected = normalize """
+    FOR u IN users
+      COLLECT country = u.country, city = u.city INTO users_in_city
+      RETURN {
+        country: country,
+        city: city,
+        users_in_city: users_in_city
+      }
+    """
+    q = Durango.query([
+      for: u in :users,
+      collect: [country = u.country, city = u.city],
+      into: users_in_city,
+      return: %{
+        country: country,
+        city:    city,
+        users_in_city: users_in_city,
+      }
+    ])
+    assert to_string(q) == expected
+  end
+
+
+  test "query can handle a  COLLECT INTO with assignment in the INTO" do
+    expected = normalize """
+    FOR u IN users
+      COLLECT country = u.country, city = u.city INTO user_names = u.name
+      RETURN {
+        country:     country,
+        city:        city,
+        user_names:  user_names
+      }
+    """
+    q = Durango.query([
+      for: u in :users,
+      collect: [country = u.country, city = u.city],
+      into: user_names = u.name,
+      return: %{
+        country:    country,
+        city:       city,
+        user_names: user_names,
+      }
+    ])
+    assert to_string(q) == expected
+  end
+  test "query can handle a  COLLECT INTO with assignment in the INTO 2" do
+    expected = normalize """
+    FOR u IN users
+      COLLECT country = u.country, city = u.city INTO users_in_city = {
+        name:       u.name,
+        is_active:  u.status == "active"
+      }
+      RETURN {
+        country:        country,
+        city:           city,
+        users_in_city:  users_in_city
+      }
+    """
+    q = Durango.query([
+      for: u in :users,
+      collect: [country = u.country, city = u.city],
+      into: users_in_city = %{
+        name:       u.name,
+        is_active:  u.status == "active",
+      },
+      return: %{
+        country:        country,
+        city:           city,
+        users_in_city:  users_in_city,
+      }
+    ])
+    assert to_string(q) == expected
+  end
+
 
 
 end

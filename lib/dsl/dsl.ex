@@ -161,7 +161,14 @@ defmodule Durango.Dsl do
     |> Query.append_tokens(":")
     |> Dsl.parse_expr(else_expr)
   end
-
+  def parse_expr(%Query{} = q, {:=, _, [left, right]}) do
+    local_variable = Dsl.Helpers.extract_labels(left)
+    q
+    |> Query.put_local_var(local_variable)
+    |> Dsl.parse_expr(left)
+    |> Query.append_tokens("=")
+    |> Dsl.parse_expr(right)
+  end
   def parse_expr(%Query{} = q, {{:., _, [{base, _, nil}, attr]}, _, []}) do
     Query.ensure_in_locals!(q, base)
     Query.append_tokens(q, Dsl.Helpers.stringify(base) <> "." <> Dsl.Helpers.stringify(attr))
@@ -178,6 +185,27 @@ defmodule Durango.Dsl do
   end
   def parse_expr(%Query{} = q, items) when is_list(items) do
     Dsl.parse_query(q, items)
+  end
+
+  def reduce_assignments(%Query{} = q, expressions, sep) when is_list(expressions) and is_binary(sep) do
+    {%Query{local_variables: updated_local_vars, bound_variables: updated_bound_vars }, all_tokens} =
+      expressions
+      |> Enum.reduce({q, []} , fn expr, {q_acc, tokens} ->
+        item_query =
+          %Query{
+            local_variables: q_acc.local_variables,
+            bound_variables: q_acc.bound_variables,
+          }
+          |> Dsl.parse_expr(expr)
+
+        { item_query, tokens ++ [Enum.join(item_query.tokens, " ")] }
+    end)
+    joined_tokens = Enum.join(all_tokens, sep)
+    %{ q |
+      bound_variables: Map.merge(q.bound_variables, updated_bound_vars),
+      local_variables: q.local_variables ++ updated_local_vars,
+    }
+    |> Query.append_tokens(joined_tokens)
   end
 
 end

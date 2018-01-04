@@ -19,38 +19,26 @@ defmodule Durango.AQL.Collect do
       alias Durango.Dsl
 
       def parse_query(%Query{} = q, [{:collect, list}, {:into, into_expr} | rest ]) when is_list(list) do
-        q = Query.append_tokens(q, "COLLECT")
-        list
-        |> Enum.reduce(q, fn expr, q_acc ->
-          Dsl.parse_expr(q_acc, expr)
-        end)
+        q
+        |> Query.append_tokens("COLLECT")
+        |> Dsl.reduce_assignments(list, ", ")
         |> Query.append_tokens("INTO")
         |> Dsl.parse_expr(into_expr)
         |> Dsl.parse_query(rest)
       end
 
-      def parse_query(%Query{} = q, [{:collect, {:=, _, [left, right]}}, {:into, into_expr} | rest ]) do
-        labels = Dsl.Helpers.extract_labels(left)
-        label_tokens = Dsl.Helpers.stringify(labels, ", ")
+      def parse_query(%Query{} = q, [{:collect, {:=, _, _} = assignment}, {:into, into_expr} | rest ]) do
         q
-        |> Query.put_local_var(labels)
         |> Query.append_tokens("COLLECT")
-        |> Query.append_tokens(label_tokens)
-        |> Query.append_tokens("=")
-        |> Dsl.parse_expr(right)
+        |> Dsl.reduce_assignments([assignment], ", ")
         |> Query.append_tokens("INTO")
         |> Dsl.parse_expr(into_expr)
         |> Dsl.parse_query(rest)
       end
-      def parse_query(%Query{} = q, [{:collect, {:=, _, [left, right]}} | rest ]) do
-        labels = Dsl.Helpers.extract_labels(left)
-        label_tokens = Enum.map(labels, &to_string/1)
+      def parse_query(%Query{} = q, [{:collect, {:=, _, _} = assignment} | rest ]) do
         q
-        |> Query.put_local_var(labels)
         |> Query.append_tokens("COLLECT")
-        |> Query.append_tokens(label_tokens)
-        |> Query.append_tokens("=")
-        |> Dsl.parse_expr(right)
+        |> Dsl.reduce_assignments([assignment], ", ")
         |> Dsl.parse_query(rest)
       end
     end
