@@ -631,4 +631,15 @@ defmodule DurangoQueryTest do
     assert to_string(q) == expected
   end
 
+  test "query can handle WITH at the beginning" do
+    expected = normalize """
+      WITH persons, others
+    """
+
+    q = Query.query([
+      with: [:persons, :others]
+    ])
+    assert to_string(q) == expected
+  end
+
 end

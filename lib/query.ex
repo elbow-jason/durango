@@ -22,6 +22,7 @@ defmodule Durango.Query do
     Return,
     Filter,
     Let,
+    With,
   }
   require ReservedWord
   require Operators
@@ -41,6 +42,7 @@ defmodule Durango.Query do
   require Return
   require Filter
   require Let
+  require With
 
   defstruct [
     tokens:               [],
@@ -127,23 +129,11 @@ defmodule Durango.Query do
   Graph.inject_parser()
   Return.inject_parser()
   Let.inject_parser()
-
-  # def parse_query(%Query{} = q, [{:return, expr} | rest ]) do
-  #   q
-  #   |> append_tokens("RETURN")
-  #   |> parse_expr(expr)
-  #   |> parse_query(rest)
-  # end
-  # def parse_query(%Query{} = q, [{:let, {:=, _, [left, right]}} | rest2]) do
-  #   q
-  #   |> append_tokens("LET")
-  #   |> append_tokens(extract_labels(left))
-  #   |> append_tokens("=")
-  #   |> parse_expr(right)
-  #   |> parse_query(rest2)
-  # end
+  With.inject_parser()
 
   def parse_query(query, []) do
+    # this function must come after all parsers.
+    # this function is a finalizer for compilation.
     %{ query | tokens: query.tokens |> Enum.join(" ") |> List.wrap }
   end
 
@@ -221,7 +211,6 @@ defmodule Durango.Query do
   @operators Operators.list_macro()
   @op_or_reserved @reserved_words ++ @operators
   def parse_expr(%Query{} = q, {comp, _, [left, right]}) when comp in @op_or_reserved do
-    # IO.inspect({comp, left, right}, label: :comparator?)
     q
     |> parse_expr(left)
     |> parse_expr(comp)
