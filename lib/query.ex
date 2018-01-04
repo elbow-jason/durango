@@ -16,6 +16,8 @@ defmodule Durango.Query do
     Remove,
     Update,
     Replace,
+    Insert,
+    For,
   }
   require ReservedWord
   require Operators
@@ -29,6 +31,8 @@ defmodule Durango.Query do
   require Remove
   require Update
   require Replace
+  require Insert
+  require For
   # require With # part of update
   # require Subquery
 
@@ -91,13 +95,13 @@ defmodule Durango.Query do
     append_tokens(q, [token])
   end
 
-  defp put_collection(%Query{} = q, _, {:.., _, _}) do
+  def put_collection(%Query{} = q, _, {:.., _, _}) do
     q
   end
-  defp put_collection(%Query{collections: collections} = q, label, module) when is_atom(label) and is_atom(module) do
+  def put_collection(%Query{collections: collections} = q, label, module) when is_atom(label) and is_atom(module) do
     %{ q | collections: [ {label, module} | collections] }
   end
-  defp put_collection(%Query{} = q, labels, module) when is_list(labels) and is_atom(module) do
+  def put_collection(%Query{} = q, labels, module) when is_list(labels) and is_atom(module) do
     Enum.reduce(labels, q, fn l, q_acc -> put_collection(q_acc, l, module) end)
   end
 
@@ -111,6 +115,8 @@ defmodule Durango.Query do
   Options.inject_parser()
   Update.inject_parser()
   Replace.inject_parser()
+  Insert.inject_parser()
+  For.inject_parser()
 
   def parse_query(%Query{} = q, [{:return, expr} | rest ]) do
     q
@@ -133,37 +139,13 @@ defmodule Durango.Query do
     |> parse_expr(expr)
     |> parse_query(rest)
   end
-  def parse_query(%Query{} = q, [{:update, labels}, {:with, with_expr} | rest]) do
-    labels = extract_labels(labels)
-    q
-    |> append_tokens("UPDATE")
-    |> append_tokens(labels)
-    |> append_tokens("WITH")
-    |> parse_expr(with_expr)
-    |> parse_query(rest)
-  end
   def parse_query(%Query{} = q, [{:filter, expr} | rest ]) do
     q
     |> append_tokens("FILTER")
     |> parse_expr(expr)
     |> parse_query(rest)
   end
-  def parse_query(%Query{} = q, [{:for, {:in, _, [labels, collection]}} | rest ]) do
-    labels = extract_labels(labels)
-    q
-    |> append_tokens(["FOR", stringify(labels, ", "), "IN", stringify(collection)])
-    |> put_local_var(labels)
-    |> put_collection(labels, collection)
-    |> parse_query(rest)
-  end
-  def parse_query(%Query{} = q, [{:for, labels}, {:in_inbound, {prev_label, attr}} | rest ]) do
-    ensure_in_locals!(q, prev_label)
-    labels = extract_labels(labels)
-    q
-    |> put_local_var(labels)
-    |> append_tokens(["FOR", stringify(labels, ", "), "IN", "INBOUND", stringify(prev_label), stringify(attr)])
-    |> parse_query(rest)
-  end
+
   def parse_query(%Query{} = q, [{:graph, graph_name} | rest]) when is_binary(graph_name) do
     q
     |> append_tokens(["GRAPH", inspect(graph_name)])
@@ -174,28 +156,16 @@ defmodule Durango.Query do
     |> append_tokens(["OUTBOUND", inspect(graph_node)])
     |> parse_query(rest)
   end
-  def parse_query(%Query{} = q, [{:for, labels}, {:in_outbound, {prev_label, attr}} | rest ]) do
-    ensure_in_locals!(q, prev_label)
-    labels = extract_labels(labels)
-    q
-    |> put_local_var(labels)
-    |> append_tokens(["FOR", stringify(labels, ", "), "IN", "OUTBOUND", stringify(prev_label), stringify(attr)])
-    |> parse_query(rest)
-  end
-  def parse_query(%Query{} = q, [{:for, labels}, {:in, collection} | rest ]) do
-    labels = extract_labels(labels)
-    q
-    |> append_tokens(["FOR", stringify(labels, ", "), "IN", stringify(collection)])
-    |> put_local_var(labels)
-    |> put_collection(labels, collection)
-    |> parse_query(rest)
-  end
-  def parse_query(%Query{} = q, [{:insert, obj} | rest]) do
-    q
-    |> append_tokens(["INSERT"])
-    |> parse_expr(obj)
-    |> parse_query(rest)
-  end
+
+  # def parse_query(%Query{} = q, [{:for, labels}, {:in, collection} | rest ]) do
+  #   labels = extract_labels(labels)
+  #   q
+  #   |> append_tokens(["FOR", stringify(labels, ", "), "IN", stringify(collection)])
+  #   |> put_local_var(labels)
+  #   |> put_collection(labels, collection)
+  #   |> parse_query(rest)
+  # end
+
   def parse_query(%Query{} = q, [{:into, collection} | rest]) do
     q
     |> append_tokens(["INTO", stringify(collection)])
@@ -205,7 +175,7 @@ defmodule Durango.Query do
     %{ query | tokens: query.tokens |> Enum.join(" ") |> List.wrap }
   end
 
-  defp ensure_in_locals!(%Query{local_variables: locals}, item) do
+  def ensure_in_locals!(%Query{local_variables: locals}, item) do
     unless name = base_name(item) in locals do
       raise CompileError, description: "Durango.Query encountered an invalid object name. Got #{inspect name}. Valid objects are #{inspect locals}."
     end
