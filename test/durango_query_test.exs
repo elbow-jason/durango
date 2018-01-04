@@ -573,7 +573,7 @@ defmodule DurangoQueryTest do
   test "query can handle REPLACE IN" do
     expected = normalize """
     FOR u IN users
-      UPDATE {
+      REPLACE {
         _key: u._key,
         name: CONCAT(u.first_name, " ", u.last_name)
       }
@@ -591,7 +591,7 @@ defmodule DurangoQueryTest do
 
     assert to_string(q) == expected
   end
-    # 
+    #
     # test "query can handle update with in syntax" do
     #   expected = normalize """
     #     FOR u IN users
