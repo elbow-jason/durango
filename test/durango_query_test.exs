@@ -506,4 +506,46 @@ defmodule DurangoQueryTest do
     assert :OLD in q.local_variables
   end
 
+
+  test "query can handle update in" do
+    expected = normalize """
+    FOR u IN users
+      UPDATE {
+        _key: u._key,
+        name: CONCAT(u.first_name, " ", u.last_name)
+      }
+      IN users
+    """
+
+    q = Query.query([
+      for: u in :users,
+      update: %{
+        _key: u._key,
+        name: concat(u.first_name, " ", u.last_name),
+      },
+      in: :users,
+    ])
+
+    assert to_string(q) == expected
+  end
+
+  test "query can handle update with in syntax" do
+    expected = normalize """
+      FOR u IN users
+        UPDATE u._key
+        WITH { name: CONCAT(u.first_name, " ", u.last_name) }
+        IN users
+    """
+
+    q = Query.query([
+      for: u in :users,
+        update: u._key,
+        with: %{
+          name: concat(u.first_name, " ", u.last_name),
+        },
+        in: :users,
+    ])
+
+    assert to_string(q) == expected
+  end
 end

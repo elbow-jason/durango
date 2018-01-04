@@ -14,6 +14,8 @@ defmodule Durango.Query do
     Sort,
     Options,
     Remove,
+    Update,
+    # With,
   }
   require ReservedWord
   require Operators
@@ -25,6 +27,8 @@ defmodule Durango.Query do
   require Sort
   require Options
   require Remove
+  require Update
+  # require With # part of update
   # require Subquery
 
   defstruct [
@@ -104,6 +108,8 @@ defmodule Durango.Query do
   Sort.inject_parser()
   Remove.inject_parser()
   Options.inject_parser()
+  Update.inject_parser()
+  # With.inject_parser()
   # Subquery.inject_parser()
 
 
@@ -346,6 +352,9 @@ defmodule Durango.Query do
   end
   def base_name({name, _, _}) when is_atom(name) do
     name
+  end
+  def base_name(%DotAccess{attrs: [{:base, base} | _]}) do
+    base
   end
 
   def to_json(%Query{} = q) do
