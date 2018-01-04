@@ -18,6 +18,10 @@ defmodule Durango.Query do
     Replace,
     Insert,
     For,
+    Graph,
+    Return,
+    Filter,
+    Let,
   }
   require ReservedWord
   require Operators
@@ -33,8 +37,10 @@ defmodule Durango.Query do
   require Replace
   require Insert
   require For
-  # require With # part of update
-  # require Subquery
+  require Graph
+  require Return
+  require Filter
+  require Let
 
   defstruct [
     tokens:               [],
@@ -117,40 +123,26 @@ defmodule Durango.Query do
   Replace.inject_parser()
   Insert.inject_parser()
   For.inject_parser()
+  Filter.inject_parser()
+  Graph.inject_parser()
+  Return.inject_parser()
+  Let.inject_parser()
 
-  def parse_query(%Query{} = q, [{:return, expr} | rest ]) do
-    q
-    |> append_tokens("RETURN")
-    |> parse_expr(expr)
-    |> parse_query(rest)
-  end
-  def parse_query(%Query{} = q, [{:let, {:=, _, [labels, rest1]}} | rest2]) do
-    labels = extract_labels(labels)
-    q
-    |> append_tokens("LET")
-    |> append_tokens(labels)
-    |> append_tokens("=")
-    |> parse_expr(rest1)
-    |> parse_query(rest2)
-  end
+  # def parse_query(%Query{} = q, [{:return, expr} | rest ]) do
+  #   q
+  #   |> append_tokens("RETURN")
+  #   |> parse_expr(expr)
+  #   |> parse_query(rest)
+  # end
+  # def parse_query(%Query{} = q, [{:let, {:=, _, [left, right]}} | rest2]) do
+  #   q
+  #   |> append_tokens("LET")
+  #   |> append_tokens(extract_labels(left))
+  #   |> append_tokens("=")
+  #   |> parse_expr(right)
+  #   |> parse_query(rest2)
+  # end
 
-  def parse_query(%Query{} = q, [{:filter, expr} | rest ]) do
-    q
-    |> append_tokens("FILTER")
-    |> parse_expr(expr)
-    |> parse_query(rest)
-  end
-
-  def parse_query(%Query{} = q, [{:graph, graph_name} | rest]) when is_binary(graph_name) do
-    q
-    |> append_tokens(["GRAPH", inspect(graph_name)])
-    |> parse_query(rest)
-  end
-  def parse_query(%Query{} = q, [{:outbound, graph_node} | rest]) when is_binary(graph_node) do
-    q
-    |> append_tokens(["OUTBOUND", inspect(graph_node)])
-    |> parse_query(rest)
-  end
   def parse_query(query, []) do
     %{ query | tokens: query.tokens |> Enum.join(" ") |> List.wrap }
   end
