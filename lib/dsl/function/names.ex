@@ -137,7 +137,7 @@ defmodule Durango.Dsl.Function.Names do
     merge_recursive:      1..255,
     parse_identifier:     1,
     translate:            2..3,
-    unset:                2,
+    unset:                2..255,
     unset_recursive:      2..255,
     values:               1..2,
     zip:                  2,

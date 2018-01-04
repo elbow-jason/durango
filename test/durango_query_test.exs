@@ -548,4 +548,87 @@ defmodule DurangoQueryTest do
 
     assert to_string(q) == expected
   end
+
+  test "query can handle update that uses NEW varialbe and OLD variable" do
+    expected = normalize """
+    FOR u IN users
+      UPDATE u WITH { value: "test" }
+      RETURN { before: OLD, after: NEW }
+    """
+
+    q = Query.query([
+      for: u in :users,
+        update: u,
+        with: %{
+          value: "test",
+        },
+        return: %{ before: OLD, after: NEW },
+    ])
+
+    assert to_string(q) == expected
+  end
+
+
+
+  test "query can handle REPLACE IN" do
+    expected = normalize """
+    FOR u IN users
+      UPDATE {
+        _key: u._key,
+        name: CONCAT(u.first_name, " ", u.last_name)
+      }
+      IN users
+    """
+
+    q = Query.query([
+      for: u in :users,
+      replace: %{
+        _key: u._key,
+        name: concat(u.first_name, " ", u.last_name),
+      },
+      in: :users,
+    ])
+
+    assert to_string(q) == expected
+  end
+    # 
+    # test "query can handle update with in syntax" do
+    #   expected = normalize """
+    #     FOR u IN users
+    #       UPDATE u._key
+    #       WITH { name: CONCAT(u.first_name, " ", u.last_name) }
+    #       IN users
+    #   """
+    #
+    #   q = Query.query([
+    #     for: u in :users,
+    #       update: u._key,
+    #       with: %{
+    #         name: concat(u.first_name, " ", u.last_name),
+    #       },
+    #       in: :users,
+    #   ])
+    #
+    #   assert to_string(q) == expected
+    # end
+    #
+    # test "query can handle update that uses NEW varialbe and OLD variable" do
+    #   expected = normalize """
+    #   FOR u IN users
+    #     UPDATE u WITH { value: "test" }
+    #     RETURN { before: OLD, after: NEW }
+    #   """
+    #
+    #   q = Query.query([
+    #     for: u in :users,
+    #       update: u,
+    #       with: %{
+    #         value: "test",
+    #       },
+    #       return: %{ before: OLD, after: NEW },
+    #   ])
+    #
+    #   assert to_string(q) == expected
+    # end
+
 end

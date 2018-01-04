@@ -15,7 +15,7 @@ defmodule Durango.Query do
     Options,
     Remove,
     Update,
-    # With,
+    Replace,
   }
   require ReservedWord
   require Operators
@@ -28,6 +28,7 @@ defmodule Durango.Query do
   require Options
   require Remove
   require Update
+  require Replace
   # require With # part of update
   # require Subquery
 
@@ -109,9 +110,7 @@ defmodule Durango.Query do
   Remove.inject_parser()
   Options.inject_parser()
   Update.inject_parser()
-  # With.inject_parser()
-  # Subquery.inject_parser()
-
+  Replace.inject_parser()
 
   def parse_query(%Query{} = q, [{:return, expr} | rest ]) do
     q
@@ -226,6 +225,21 @@ defmodule Durango.Query do
       raise CompileError, description: msg
     end
   end
+  def parse_expr(%Query{} = q, {:__aliases__, _, [:NEW]}) do
+    if :NEW in q.local_variables do
+      q
+      |> append_tokens("NEW")
+    else
+      msg = [
+        "Durango.Query.query parsing error -",
+        "NEW variable is only in scope with using",
+        "UPDATE, REPLACE, or INSERT.",
+      ]
+      |> Enum.join(" ")
+      raise CompileError, description: msg
+    end
+  end
+
   def parse_expr(%Query{} = q, {:subquery, _, [ast]}) when is_list(ast) do
     Durango.Dsl.Subquery.parse_query(q, ast)
   end
