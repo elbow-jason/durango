@@ -206,12 +206,20 @@ defmodule Durango.Query do
     end
   end
 
-  # def parse_expr(%Query{} = q, {:%{}, _, fields}) do
-  #   q = put_token()
-  #   q = Enum.reduce(fields, q, fn item, q_acc -> parse_expr(q_acc, item) end)
-  #   IO.inspect(reduced, label: :reduced_query_map)
-  # end
-
+  def parse_expr(%Query{} = q, {:__aliases__, _, [:OLD]}) do
+    if :OLD in q.local_variables do
+      q
+      |> append_tokens("OLD")
+    else
+      msg = [
+        "Durango.Query.query parsing error -",
+        "OLD variable is only in scope with using",
+        "UPDATE, REPLACE, or REMOVE.",
+      ]
+      |> Enum.join(" ")
+      raise CompileError, description: msg
+    end
+  end
   def parse_expr(%Query{} = q, {:subquery, _, [ast]}) when is_list(ast) do
     Durango.Dsl.Subquery.parse_query(q, ast)
   end

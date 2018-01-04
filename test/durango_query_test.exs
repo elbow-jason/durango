@@ -485,7 +485,24 @@ defmodule DurangoQueryTest do
       options: %{ ignoreErrors: true }
     ])
     assert to_string(q) == expected
+  end
 
+  test "OLD works var is available after remove" do
+    expected = normalize """
+    FOR u IN users
+      REMOVE u IN users
+      LET removed = OLD
+      RETURN removed._key
+    """
+
+    q = Query.query([
+      for: u in :users,
+      remove: u in :users,
+      let: removed = OLD,
+      return: removed._key,
+      ])
+
+    assert to_string(q) == expected
   end
 
 end
