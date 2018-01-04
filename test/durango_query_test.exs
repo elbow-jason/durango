@@ -595,7 +595,7 @@ defmodule DurangoQueryTest do
   test "query can handle REPLACE WITH syntax" do
     expected = normalize """
       FOR u IN users
-        replace u._key
+        REPLACE u._key
         WITH { name: CONCAT(u.first_name, " ", u.last_name) }
         IN users
     """
@@ -611,24 +611,24 @@ defmodule DurangoQueryTest do
 
     assert to_string(q) == expected
   end
-    #
-    # test "query can handle update that uses NEW varialbe and OLD variable" do
-    #   expected = normalize """
-    #   FOR u IN users
-    #     UPDATE u WITH { value: "test" }
-    #     RETURN { before: OLD, after: NEW }
-    #   """
-    #
-    #   q = Query.query([
-    #     for: u in :users,
-    #       update: u,
-    #       with: %{
-    #         value: "test",
-    #       },
-    #       return: %{ before: OLD, after: NEW },
-    #   ])
-    #
-    #   assert to_string(q) == expected
-    # end
+
+  test "query can handle REPLACE that uses NEW varialbe and OLD variable" do
+    expected = normalize """
+    FOR u IN users
+      REPLACE u WITH { value: "test" }
+      RETURN { before: OLD, after: NEW }
+    """
+
+    q = Query.query([
+      for: u in :users,
+        replace: u,
+        with: %{
+          value: "test",
+        },
+        return: %{ before: OLD, after: NEW },
+    ])
+
+    assert to_string(q) == expected
+  end
 
 end
