@@ -426,4 +426,52 @@ defmodule DurangoQueryTest do
     assert to_string(q) == expected
   end
 
+  test "query can handle a simple remove" do
+    expected = normalize """
+    FOR u IN users
+      REMOVE u IN users
+    """
+    q = Query.query([
+      for: u in :users,
+      remove: u in :users
+      ])
+    assert to_string(q) == expected
+  end
+
+  test "query can handle a remove by attr" do
+    expected = normalize """
+      FOR u IN users
+        REMOVE u._key IN users
+    """
+    q = Query.query([
+      for: u in :users,
+      remove: u._key in :users
+    ])
+    assert to_string(q) == expected
+  end
+
+  test "query can handle remove by object" do
+    expected = normalize """
+    FOR u IN users
+      REMOVE { _key: u._key } IN users
+    """
+    q = Query.query([
+      for: u in :users,
+      remove: %{_key: u._key } in :users
+    ])
+    assert to_string(q) == expected
+  end
+
+  test "query can handle a remove with an embedded func" do
+    expected = normalize """
+      FOR i IN 1..1000
+        REMOVE { _key: CONCAT("test", i) } IN users
+    """
+    q = Query.query([
+      for: i in 1..1000,
+      remove: %{ _key: concat("test", i) } in :users,
+    ])
+    assert to_string(q) == expected
+  end
+
 end

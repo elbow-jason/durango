@@ -12,6 +12,8 @@ defmodule Durango.Query do
     Operators,
     Limit,
     Sort,
+    Options,
+    Remove,
   }
   require ReservedWord
   require Operators
@@ -21,6 +23,8 @@ defmodule Durango.Query do
   require Limit
   require Function
   require Sort
+  require Options
+  require Remove
   # require Subquery
 
   defstruct [
@@ -98,6 +102,8 @@ defmodule Durango.Query do
   Object.inject_parser()
   Function.inject_parser()
   Sort.inject_parser()
+  Remove.inject_parser()
+  Options.inject_parser()
   # Subquery.inject_parser()
 
 
