@@ -24,6 +24,7 @@ defmodule Durango.Query do
     Let,
     With,
     Upsert,
+    Collect,
   }
   require ReservedWord
   require Operators
@@ -45,6 +46,7 @@ defmodule Durango.Query do
   require Let
   require With
   require Upsert
+  require Collect
 
   defstruct [
     tokens:               [],
@@ -133,6 +135,7 @@ defmodule Durango.Query do
   Let.inject_parser()
   With.inject_parser()
   Upsert.inject_parser()
+  Collect.inject_parser()
 
   def parse_query(query, []) do
     # this function must come after all parsers.

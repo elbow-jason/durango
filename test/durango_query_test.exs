@@ -702,4 +702,49 @@ defmodule DurangoQueryTest do
     assert to_string(q) == expected
 
   end
+  test "query can handle a simple COLLECT" do
+    expected = normalize """
+    FOR u IN users
+    COLLECT city = u.city
+    RETURN {
+      city: city
+    }
+    """
+
+    q = Query.query([
+      for: u in :users,
+      collect: city = u.city,
+      return: %{
+        city: city
+      }
+    ])
+
+    assert to_string(q) == expected
+
+  end
+  test "query can handle a simple COLLECT INTO" do
+    expected = normalize """
+    FOR u IN users
+    COLLECT city = u.city INTO users_in_city
+    RETURN {
+      city: city,
+      users_in_city: users_in_city
+    }
+    """
+
+    q = Query.query([
+      for: u in :users,
+      collect: city = u.city,
+      into: users_in_city,
+      return: %{
+        city: city,
+        users_in_city: users_in_city,
+      }
+    ])
+
+    assert to_string(q) == expected
+
+  end
+
+
 end
