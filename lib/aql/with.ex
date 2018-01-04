@@ -3,8 +3,10 @@ defmodule Durango.AQL.With do
   defmacro inject_parser() do
     quote do
       alias Durango.Query
+      alias Durango.Dsl
+    
       def parse_query(%Query{tokens: []} = q, [{:with, collections} | rest ]) when is_list(collections) do
-        collections_token = Query.stringify(collections, ", ")
+        collections_token = Dsl.Helpers.stringify(collections, ", ")
         q
         |> Query.append_tokens("WITH")
         |> Query.append_tokens(collections_token)

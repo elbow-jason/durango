@@ -4,6 +4,7 @@ defmodule Durango.AQL.Upsert do
     quote do
 
       alias Durango.Query
+      alias Durango.Dsl
 
       @in_keys [:in, :into]
       @change_keys [:update, :replace]
@@ -21,14 +22,14 @@ defmodule Durango.AQL.Upsert do
         |> Query.put_local_var(:OLD)
         |> Query.put_local_var(:NEW)
         |> Query.append_tokens("UPSERT")
-        |> Query.parse_expr(upsert_expr)
+        |> Dsl.parse_expr(upsert_expr)
         |> Query.append_tokens("INSERT")
-        |> Query.parse_expr(insert_expr)
+        |> Dsl.parse_expr(insert_expr)
         |> Query.append_tokens(change_token)
-        |> Query.parse_expr(change_expr)
+        |> Dsl.parse_expr(change_expr)
         |> Query.append_tokens(in_token)
-        |> Query.parse_expr(in_expr)
-        |> Query.parse_query(rest)
+        |> Dsl.parse_expr(in_expr)
+        |> Dsl.parse_query(rest)
       end
     end
   end

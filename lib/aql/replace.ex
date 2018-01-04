@@ -4,6 +4,8 @@ defmodule Durango.AQL.Replace do
   defmacro inject_parser() do
     quote do
       alias Durango.Query
+      alias Durango.Dsl
+      
       @in_keys [:in, :into]
       def parse_query(%Query{} = q, [{:replace, update_expr}, {:with, with_expr}, {in_key, in_expr} | rest ]) when in_key in @in_keys do
         in_token = case in_key do
@@ -14,42 +16,42 @@ defmodule Durango.AQL.Replace do
         |> Query.put_local_var(:OLD)
         |> Query.put_local_var(:NEW)
         |> Query.append_tokens("REPLACE")
-        |> Query.parse_expr(update_expr)
+        |> Dsl.parse_expr(update_expr)
         |> Query.append_tokens("WITH")
-        |> Query.parse_expr(with_expr)
+        |> Dsl.parse_expr(with_expr)
         |> Query.append_tokens(in_token)
-        |> Query.parse_expr(in_expr)
-        |> Query.parse_query(rest)
+        |> Dsl.parse_expr(in_expr)
+        |> Dsl.parse_query(rest)
       end
       def parse_query(%Query{} = q, [{:replace, update_expr}, {:with, with_expr} | rest ]) do
         q
         |> Query.put_local_var(:OLD)
         |> Query.put_local_var(:NEW)
         |> Query.append_tokens("REPLACE")
-        |> Query.parse_expr(update_expr)
+        |> Dsl.parse_expr(update_expr)
         |> Query.append_tokens("WITH")
-        |> Query.parse_expr(with_expr)
-        |> Query.parse_query(rest)
+        |> Dsl.parse_expr(with_expr)
+        |> Dsl.parse_query(rest)
       end
       def parse_query(%Query{} = q, [{:replace, {:in, _, [update_expr, in_expr]}} | rest ]) do
         q
         |> Query.put_local_var(:OLD)
         |> Query.put_local_var(:NEW)
         |> Query.append_tokens("REPLACE")
-        |> Query.parse_expr(update_expr)
+        |> Dsl.parse_expr(update_expr)
         |> Query.append_tokens("IN")
-        |> Query.parse_expr(in_expr)
-        |> Query.parse_query(rest)
+        |> Dsl.parse_expr(in_expr)
+        |> Dsl.parse_query(rest)
       end
       def parse_query(%Query{} = q, [{:replace, update_expr}, {:in, in_expr} | rest]) do
         q
         |> Query.put_local_var(:OLD)
         |> Query.put_local_var(:NEW)
         |> Query.append_tokens("REPLACE")
-        |> Query.parse_expr(update_expr)
+        |> Dsl.parse_expr(update_expr)
         |> Query.append_tokens("IN")
-        |> Query.parse_expr(in_expr)
-        |> Query.parse_query(rest)
+        |> Dsl.parse_expr(in_expr)
+        |> Dsl.parse_query(rest)
       end
 
     end

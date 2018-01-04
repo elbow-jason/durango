@@ -2,6 +2,7 @@ defmodule Durango.Dsl.Object do
   alias Durango.Dsl.Object
   use Durango.Dsl.Quoter
   alias Durango.Query
+  alias Durango.Dsl
 
   defstruct [
     fields: []
@@ -11,15 +12,14 @@ defmodule Durango.Dsl.Object do
     %{ obj | fields: [{key, value} | fields ]}
   end
 
-  def from_quoted({:%{}, meta, fields}) do
+  def from_quoted({:%{}, _, fields}) do
     from_quoted(%Object{}, fields)
   end
   def from_quoted(%Object{} = obj, fields) when is_list(fields) do
     fields
     |> Enum.reduce(obj, fn {k, v}, obj_acc ->
-      {ast, _bound_vars} = Durango.Query.preprocess_ast(v)
-      IO.inspect({v, ast}, label: :before_and_after)
-      put_field(obj, k, ast)
+      {ast, _bound_vars} = Durango.Dsl.preprocess_ast(v)
+      put_field(obj_acc, k, ast)
     end)
   end
 
@@ -30,7 +30,7 @@ defmodule Durango.Dsl.Object do
 
       def parse_expr(%Query{} = q, {:%{}, _, fields}) when is_list(fields) do
         fields_query = Enum.map(fields, fn {key, value} ->
-          value_query = Query.parse_expr(%Query{local_variables: q.local_variables}, value)
+          value_query = Dsl.parse_expr(%Query{local_variables: q.local_variables}, value)
           {key, value_query}
         end)
         obj = %Object{fields: fields_query}

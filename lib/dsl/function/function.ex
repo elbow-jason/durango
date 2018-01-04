@@ -37,6 +37,7 @@ defmodule Durango.Dsl.Function do
     quote do
       alias Durango.Query
       alias Durango.Dsl.Function
+      alias Durango.Dsl
 
       @function_names Function.Names.names_list()
       @functions      Function.Names.functions()
@@ -46,7 +47,7 @@ defmodule Durango.Dsl.Function do
         Function.validate!({func_name, arity}, args)
         args_query =
           Enum.reduce(args, %Query{bound_variables: q.bound_variables}, fn arg, q_acc ->
-            Query.parse_expr(q_acc, arg)
+            Dsl.parse_expr(q_acc, arg)
           end)
         func_token =
           [

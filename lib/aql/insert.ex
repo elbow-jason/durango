@@ -4,7 +4,8 @@ defmodule Durango.AQL.Insert do
     quote do
 
       alias Durango.Query
-
+      alias Durango.Dsl
+    
       @in_keys [:into, :in]
 
       def parse_query(%Query{} = q, [{:insert, insert_expr}, {in_key, in_expr} | rest]) when in_key in @in_keys do
@@ -15,10 +16,10 @@ defmodule Durango.AQL.Insert do
         q
         |> Query.put_local_var(:NEW)
         |> Query.append_tokens("INSERT")
-        |> Query.parse_expr(insert_expr)
+        |> Dsl.parse_expr(insert_expr)
         |> Query.append_tokens(in_token)
-        |> Query.parse_expr(in_expr)
-        |> Query.parse_query(rest)
+        |> Dsl.parse_expr(in_expr)
+        |> Dsl.parse_query(rest)
       end
 
     end

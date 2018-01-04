@@ -15,13 +15,13 @@ defmodule Durango.AQL.Sort do
           |> Enum.join(" ")
           |> String.trim
         q
-        |> Durango.Query.append_tokens(["SORT", sort_token])
+        |>  Query.append_tokens(["SORT", sort_token])
         |> parse_query(rest)
       end
       def parse_query(%Query{} = q, [{:sort, by_items} | rest]) do
         items_token = Durango.AQL.Sort.render_items(by_items)
         q
-        |> Durango.Query.append_tokens(["SORT", items_token])
+        |>  Query.append_tokens(["SORT", items_token])
         |> parse_query(rest)
       end
 

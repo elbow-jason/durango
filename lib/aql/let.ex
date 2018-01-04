@@ -2,14 +2,19 @@ defmodule Durango.AQL.Let do
 
   defmacro inject_parser() do
     quote do
-      alias Durango.Query
-      def parse_query(%Query{} = q, [{:let, {:=, _, [left, right]}} | rest2]) do
+      alias Durango.{
+        Query,
+        Dsl,
+      }
+
+      def parse_query(%Query{} = q, [{:let, {:=, _, [left, right]}} | rest ]) do
+        left_labels = Dsl.Helpers.extract_labels(left)
         q
-        |> append_tokens("LET")
-        |> append_tokens(extract_labels(left))
-        |> append_tokens("=")
-        |> parse_expr(right)
-        |> parse_query(rest2)
+        |> Query.append_tokens("LET")
+        |> Query.append_tokens(left_labels)
+        |> Query.append_tokens("=")
+        |> Dsl.parse_expr(right)
+        |> Dsl.parse_query(rest)
       end
     end
   end

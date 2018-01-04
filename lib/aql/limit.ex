@@ -25,9 +25,9 @@ defmodule Durango.AQL.Limit do
   ```
 
   Durango Query Usage:
-      iex> require Durango.Query
-      Durango.Query
-      iex> [for: u, in: :users, limit: 5, return: u] |> Durango.Query.query() |> to_string
+      iex> require Durango
+      Durango
+      iex> Durango.query([for: u, in: :users, limit: 5, return: u]) |> to_string
       "FOR u IN users LIMIT 5 RETURN u"
 
   """
@@ -37,18 +37,20 @@ defmodule Durango.AQL.Limit do
 
   defmacro inject_parser() do
     quote do
+      alias Durango.Query
+      alias Durango.Dsl
+
       def parse_query(%Query{} = q, [{:limit, {offset, count}} | rest]) do
         limit_token = Durango.AQL.Limit.render_args(offset, count)
         q
-        |> Durango.Query.append_tokens(["LIMIT", limit_token])
-        |> parse_query(rest)
+        |> Query.append_tokens(["LIMIT", limit_token])
+        |> Dsl.parse_query(rest)
       end
       def parse_query(%Query{} = q, [{:limit, count} | rest ]) do
-        # IO.inspect(count, label: :limit_count)
         limit_token = Durango.AQL.Limit.render_args(count)
         q
-        |> Durango.Query.append_tokens(["LIMIT", limit_token])
-        |> parse_query(rest)
+        |> Query.append_tokens(["LIMIT", limit_token])
+        |> Dsl.parse_query(rest)
       end
     end
   end

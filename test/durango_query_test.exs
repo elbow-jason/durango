@@ -1,8 +1,8 @@
 defmodule DurangoQueryTest do
   use ExUnit.Case
   doctest Durango.Query
-  require Durango.Query
-  alias Durango.Query
+  require Durango
+  # alias Durango.Query
 
   def normalize(string) do
     string
@@ -11,54 +11,71 @@ defmodule DurangoQueryTest do
   end
 
   test "query can parse a for and return" do
-    assert [
+    expected = normalize """
+      FOR p IN persons
+        RETURN p
+    """
+    q = Durango.query([
       for: p,
       in: :persons,
       return: p,
-    ]
-    |> Query.query()
-    |> to_string == "FOR p IN persons RETURN p"
+    ])
+    assert to_string(q) == expected
   end
 
   test "query can parse a for, filter, and return" do
-    assert [
+    expected = normalize """
+     FOR p IN persons
+      FILTER p.name == \"willy\"
+      RETURN p
+    """
+    q = Durango.query([
       for: p,
       in: :persons,
       filter: p.name == "willy",
       return: p
-    ]
-    |> Query.query()
-    |> to_string == "FOR p IN persons FILTER p.name == \"willy\" RETURN p"
+    ])
+
+    assert to_string(q) == expected
   end
 
   test "query can parse a for, limit, and return" do
-    assert [
+    expected = normalize """
+    FOR p IN persons
+      LIMIT 10
+      RETURN p
+    """
+    q = Durango.query([
       for: p,
       in: :persons,
       limit: 10,
       return: p
-    ]
-    |> Query.query()
-    |> to_string == "FOR p IN persons LIMIT 10 RETURN p"
+    ])
+    assert to_string(q) == expected
   end
 
   test "query can parse a for, limit with a bound_var, and return" do
+    expected = normalize """
+    FOR p IN persons
+      LIMIT @counted
+      RETURN p
+    """
     counted = 10
-    query = Query.query([
+    q = Durango.query([
       for: p,
       in: :persons,
       limit: ^counted,
       return: p
     ])
-    assert to_string(query) == "FOR p IN persons LIMIT @counted RETURN p"
-    assert query.bound_variables == %{
+    assert to_string(q) == expected
+    assert q.bound_variables == %{
       counted: %Durango.Dsl.BoundVar{key: :counted, validations: [], value: 10},
     }
   end
 
   test "query can parse a pinned/interpolated value in an expression" do
     min_age = 18
-    query = Query.query([
+    query = Durango.query([
       for: u,
       in: :users,
       filter: u.age >= ^min_age,
@@ -69,7 +86,7 @@ defmodule DurangoQueryTest do
   end
 
   test "query can parse a dot_access return value" do
-    query = Query.query([
+    query = Durango.query([
       for: u,
       in: :users,
       filter: u.age >= 18,
@@ -81,7 +98,7 @@ defmodule DurangoQueryTest do
 
 
   test "query can parse a map return value" do
-    query = Query.query([
+    query = Durango.query([
       for: u,
       in: :users,
       filter: u.age >= 18,
@@ -92,7 +109,7 @@ defmodule DurangoQueryTest do
   end
 
   test "query can parse a return document" do
-    query = Query.query([
+    query = Durango.query([
       return: document("123"),
     ])
     assert to_string(query) == ~s/RETURN DOCUMENT("123")/
@@ -101,12 +118,12 @@ defmodule DurangoQueryTest do
 
 
   test "query can parse a `for: a in :things` type of query" do
-    q = Query.query([for: a in :thing, return: a])
+    q = Durango.query([for: a in :thing, return: a])
     assert to_string(q) == "FOR a IN thing RETURN a"
   end
 
   test "query can parse a multi-variable for expression" do
-    q = Query.query([
+    q = Durango.query([
       for: {a, b, c} in :things,
         return: %{a: a, b: b, c: c}
     ])
@@ -128,7 +145,7 @@ defmodule DurangoQueryTest do
     """
 
 
-    q = Query.query([
+    q = Durango.query([
       for: meetup, in: :meetups,
         filter: "NOSQL" in meetup.topics,
         for: city, in_outbound: {meetup, :held_in},
@@ -155,7 +172,7 @@ defmodule DurangoQueryTest do
       RETURN p
     """
 
-    q = Query.query([
+    q = Durango.query([
       for: {v, e, p} in 1..5,
       outbound: "circles/A",
       graph: "traversalGraph",
@@ -168,7 +185,7 @@ defmodule DurangoQueryTest do
 
   test "query can handle an interpolated dot access" do
     my_map = %{name: "Jason"}
-    q = Query.query(return: ^my_map.name)
+    q = Durango.query(return: ^my_map.name)
     assert to_string(q) == "RETURN @my_map_name"
     assert q.bound_variables == %{"my_map_name" => %Durango.Dsl.BoundVar{key: "my_map_name", validations: [], value: "Jason"}}
   end
@@ -182,7 +199,7 @@ defmodule DurangoQueryTest do
       FILTER p.edges[*].theTruth ALL == true
       RETURN p
     """
-    q = Query.query([
+    q = Durango.query([
       for: {v, e, p},
       in:  1..5,
       outbound: "circles/A",
@@ -202,7 +219,7 @@ defmodule DurangoQueryTest do
       FILTER p.edges[*].theTruth ANY == true
       RETURN p
     """
-    q = Query.query([
+    q = Durango.query([
       for: {v, e, p},
       in:  1..5,
       outbound: "circles/A",
@@ -223,7 +240,7 @@ defmodule DurangoQueryTest do
       FILTER p.edges[*].theTruth NONE == true
       RETURN p
     """
-    q = Query.query([
+    q = Durango.query([
       for: {v, e, p},
       in:  1..5,
       outbound: "circles/A",
@@ -245,7 +262,7 @@ defmodule DurangoQueryTest do
       FILTER p.edges[@some_key].theTruth == true
       RETURN p
     """
-    q = Query.query([
+    q = Durango.query([
       for: {v, e, p},
       in:  1..5,
       outbound: "circles/A",
@@ -268,7 +285,7 @@ defmodule DurangoQueryTest do
             ]
         }
     """
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
         return: %{
           name: u.name,
@@ -288,7 +305,7 @@ defmodule DurangoQueryTest do
     LET doc = { foo: { bar: "baz" } }
     RETURN doc
     """
-    q = Query.query([
+    q = Durango.query([
       let: doc = %{foo: %{bar: "baz"}},
       return: doc,
     ])
@@ -299,7 +316,7 @@ defmodule DurangoQueryTest do
     expected = normalize """
     FOR u IN users RETURN u["details"]["name"]
     """
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
       return: u["details"]["name"],
     ])
@@ -313,7 +330,7 @@ defmodule DurangoQueryTest do
     """
     key1 = :foo
     key2 = :bar
-    q = Query.query([
+    q = Durango.query([
       let: doc = %{foo: %{bar: "baz"}},
       return: doc[^key1][^key2],
     ])
@@ -329,7 +346,7 @@ defmodule DurangoQueryTest do
     FOR u IN users
       UPDATE u WITH { gender: TRANSLATE(u.gender, { m: "male", f: "female" }) } IN users
     """
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
       update: u, with: %{
         gender: translate(u.gender, %{m: "male", f: "female"})
@@ -346,7 +363,7 @@ defmodule DurangoQueryTest do
         SORT p.age
         RETURN p
     """
-    q = Query.query([
+    q = Durango.query([
       for: p in :persons,
       sort: p.age,
       return: p,
@@ -360,7 +377,7 @@ defmodule DurangoQueryTest do
         SORT p.age, p.fist_name, p.last_name
         RETURN p
     """
-    q = Query.query([
+    q = Durango.query([
       for: p in :persons,
       sort: [p.age, p.fist_name, p.last_name],
       return: p,
@@ -374,7 +391,7 @@ defmodule DurangoQueryTest do
         SORT p.age, p.fist_name, p.last_name DESC
         RETURN p
     """
-    q = Query.query([
+    q = Durango.query([
       for: p in :persons,
       sort: {[p.age, p.fist_name, p.last_name], :DESC},
       return: p,
@@ -388,7 +405,7 @@ defmodule DurangoQueryTest do
         SORT p._id DESC
         RETURN p
     """
-    q = Query.query([
+    q = Durango.query([
       for: p in :persons,
       sort: {p._id, :DESC},
       return: p,
@@ -411,7 +428,7 @@ defmodule DurangoQueryTest do
       )
       RETURN { person: p, recommendations: recommendations }
     """
-    q = Query.query([
+    q = Durango.query([
       for: p in :persons,
       let: recommendations = subquery([
         for: r, in: :recommendations,
@@ -431,7 +448,7 @@ defmodule DurangoQueryTest do
     FOR u IN users
       REMOVE u IN users
     """
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
       remove: u in :users
       ])
@@ -443,7 +460,7 @@ defmodule DurangoQueryTest do
       FOR u IN users
         REMOVE u._key IN users
     """
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
       remove: u._key in :users
     ])
@@ -455,7 +472,7 @@ defmodule DurangoQueryTest do
     FOR u IN users
       REMOVE { _key: u._key } IN users
     """
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
       remove: %{_key: u._key } in :users
     ])
@@ -467,7 +484,7 @@ defmodule DurangoQueryTest do
       FOR i IN 1..1000
         REMOVE { _key: CONCAT("test", i) } IN users
     """
-    q = Query.query([
+    q = Durango.query([
       for: i in 1..1000,
       remove: %{ _key: concat("test", i) } in :users,
     ])
@@ -479,7 +496,7 @@ defmodule DurangoQueryTest do
       FOR i IN 1..1000
       REMOVE { _key: CONCAT("test", i) } IN users OPTIONS { ignoreErrors: true }
     """
-    q = Query.query([
+    q = Durango.query([
       for: i in 1..1000,
       remove: %{ _key: concat("test", i) } in :users,
       options: %{ ignoreErrors: true }
@@ -495,7 +512,7 @@ defmodule DurangoQueryTest do
       RETURN removed._key
     """
 
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
       remove: u in :users,
       let: removed = OLD,
@@ -517,7 +534,7 @@ defmodule DurangoQueryTest do
       IN users
     """
 
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
       update: %{
         _key: u._key,
@@ -537,7 +554,7 @@ defmodule DurangoQueryTest do
         IN users
     """
 
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
         update: u._key,
         with: %{
@@ -556,7 +573,7 @@ defmodule DurangoQueryTest do
       RETURN { before: OLD, after: NEW }
     """
 
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
         update: u,
         with: %{
@@ -580,7 +597,7 @@ defmodule DurangoQueryTest do
       IN users
     """
 
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
       replace: %{
         _key: u._key,
@@ -600,7 +617,7 @@ defmodule DurangoQueryTest do
         IN users
     """
 
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
         replace: u._key,
         with: %{
@@ -619,7 +636,7 @@ defmodule DurangoQueryTest do
       RETURN { before: OLD, after: NEW }
     """
 
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
         replace: u,
         with: %{
@@ -635,7 +652,7 @@ defmodule DurangoQueryTest do
     expected = normalize """
       WITH persons, others
     """
-    q = Query.query([
+    q = Durango.query([
       with: [:persons, :others]
     ])
     assert to_string(q) == expected
@@ -648,7 +665,7 @@ defmodule DurangoQueryTest do
       UPDATE { logins: OLD.logins + 1 } IN users
     """
 
-    q = Query.query([
+    q = Durango.query([
       upsert: %{ name: "superuser" },
       insert: %{ name: "superuser", logins: 1, date_created: date_now() },
       update: %{ logins: OLD.logins + 1 },
@@ -664,7 +681,7 @@ defmodule DurangoQueryTest do
       REPLACE { logins: OLD.logins + 1 } IN users
     """
 
-    q = Query.query([
+    q = Durango.query([
       upsert:   %{ name: "superuser" },
       insert:   %{ name: "superuser", logins: 1, date_created: date_now() },
       replace:  %{ logins: OLD.logins + 1 },
@@ -684,7 +701,7 @@ defmodule DurangoQueryTest do
     RETURN { doc: NEW, type: OLD ? "update" : "insert" }
     """
 
-    q = Query.query([
+    q = Durango.query([
       upsert: %{ name: "superuser" },
       insert: %{ name: "superuser", logins: 1, date_created: date_now() },
       update: %{ logins: OLD.logins + 1 },
@@ -711,7 +728,7 @@ defmodule DurangoQueryTest do
     }
     """
 
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
       collect: city = u.city,
       return: %{
@@ -732,7 +749,7 @@ defmodule DurangoQueryTest do
     }
     """
 
-    q = Query.query([
+    q = Durango.query([
       for: u in :users,
       collect: city = u.city,
       into: users_in_city,

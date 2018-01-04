@@ -81,26 +81,30 @@ defmodule Durango.Dsl.DotAccess do
   defmacro inject_parser() do
     quote do
 
-      def parse_query(%Durango.Query{} = q, {{:., _, [_, attr]}, _, rest} = ast) when is_atom(attr) do
-        dot = %Durango.Dsl.DotAccess{} = Durango.Dsl.DotAccess.from_quoted(ast)
-        token = Durango.Dsl.DotAccess.to_aql(dot)
+      alias Durango.Query
+      alias Durango.Dsl
+      alias Durango.Dsl.DotAccess
+
+      def parse_query(%Query{} = q, {{:., _, [_, attr]}, _, rest} = ast) when is_atom(attr) do
+        dot = %Dsl.DotAccess{} = DotAccess.from_quoted(ast)
+        token = DotAccess.to_aql(dot)
         q
-        |> Durango.Query.append_tokens(token)
-        |> Durango.Query.parse_query(rest)
+        |> Query.append_tokens(token)
+        |> Dsl.parse_query(rest)
       end
 
-      def parse_expr(%Durango.Query{} = q, {{:., _, [_, attr]}, _, rest} = ast) when is_atom(attr) do
-        dot = %Durango.Dsl.DotAccess{} = Durango.Dsl.DotAccess.from_quoted(ast)
-        token = Durango.Dsl.DotAccess.to_aql(dot)
+      def parse_expr(%Query{} = q, {{:., _, [_, attr]}, _, rest} = ast) when is_atom(attr) do
+        dot = %DotAccess{} = DotAccess.from_quoted(ast)
+        token = DotAccess.to_aql(dot)
         q
-        |> Durango.Query.append_tokens(token)
-        |> Durango.Query.parse_query(rest)
+        |> Query.append_tokens(token)
+        |> Dsl.parse_query(rest)
       end
 
-      def parse_expr(%Durango.Query{} = q, %DotAccess{} = dot) do
-        token = Durango.Dsl.DotAccess.to_aql(dot)
+      def parse_expr(%Query{} = q, %DotAccess{} = dot) do
+        token = DotAccess.to_aql(dot)
         q
-        |> Durango.Query.append_tokens(token)
+        |> Query.append_tokens(token)
       end
     end
   end
