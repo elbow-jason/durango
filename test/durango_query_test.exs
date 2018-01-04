@@ -474,4 +474,18 @@ defmodule DurangoQueryTest do
     assert to_string(q) == expected
   end
 
+  test "query can handle a remove with options" do
+    expected = normalize """
+      FOR i IN 1..1000
+      REMOVE { _key: CONCAT("test", i) } IN users OPTIONS { ignoreErrors: true }
+    """
+    q = Query.query([
+      for: i in 1..1000,
+      remove: %{ _key: concat("test", i) } in :users,
+      options: %{ ignoreErrors: true }
+    ])
+    assert to_string(q) == expected
+
+  end
+
 end
