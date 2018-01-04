@@ -1,3 +1,3 @@
-defmodule Durango.AQL.Dsl do
+defmodule Durango.Dsl do
 
 end

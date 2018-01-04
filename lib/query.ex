@@ -23,6 +23,7 @@ defmodule Durango.Query do
     Filter,
     Let,
     With,
+    Upsert,
   }
   require ReservedWord
   require Operators
@@ -43,6 +44,7 @@ defmodule Durango.Query do
   require Filter
   require Let
   require With
+  require Upsert
 
   defstruct [
     tokens:               [],
@@ -130,6 +132,7 @@ defmodule Durango.Query do
   Return.inject_parser()
   Let.inject_parser()
   With.inject_parser()
+  Upsert.inject_parser()
 
   def parse_query(query, []) do
     # this function must come after all parsers.

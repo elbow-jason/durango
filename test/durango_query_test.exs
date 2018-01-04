@@ -635,11 +635,44 @@ defmodule DurangoQueryTest do
     expected = normalize """
       WITH persons, others
     """
-
     q = Query.query([
       with: [:persons, :others]
     ])
     assert to_string(q) == expected
+  end
+
+  test "query can handle UPSERT that uses UPDATE" do
+    expected = normalize """
+      UPSERT { name: "superuser" }
+      INSERT { name: "superuser", logins: 1, date_created: DATE_NOW() }
+      UPDATE { logins: OLD.logins + 1 } IN users
+    """
+
+    q = Query.query([
+      upsert: %{ name: "superuser" },
+      insert: %{ name: "superuser", logins: 1, date_created: date_now() },
+      update: %{ logins: OLD.logins + 1 },
+      in: :users
+    ])
+    assert to_string(q) == expected
+  end
+
+  test "query can handle UPSERT that uses REPLACE" do
+    expected = normalize """
+      UPSERT  { name: "superuser" }
+      INSERT  { name: "superuser", logins: 1, date_created: DATE_NOW() }
+      REPLACE { logins: OLD.logins + 1 } IN users
+    """
+
+    q = Query.query([
+      upsert:   %{ name: "superuser" },
+      insert:   %{ name: "superuser", logins: 1, date_created: date_now() },
+      replace:  %{ logins: OLD.logins + 1 },
+      in: :users
+    ])
+
+    assert to_string(q) == expected
+
   end
 
 end

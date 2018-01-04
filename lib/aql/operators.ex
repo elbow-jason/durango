@@ -1,5 +1,12 @@
 defmodule Durango.AQL.Operators do
   @list [
+    :+,
+    :-,
+    :*,
+    :/,
+    :div,
+    :mod,
+    :%,
     :==,       # equality
     :!=,       # inequality
     :<,        # less than
@@ -25,6 +32,13 @@ defmodule Durango.AQL.Operators do
   defmacro list_macro() do
     quote do
       [
+        :+,
+        :-,
+        :*,
+        :/,
+        :div,
+        :mod,
+        :%,
         :==,
         :!=,
         :<,
