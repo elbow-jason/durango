@@ -675,4 +675,31 @@ defmodule DurangoQueryTest do
 
   end
 
+
+  test "query can handle an if expression that turns to a ternary" do
+    expected = normalize """
+    UPSERT { name: "superuser" }
+    INSERT { name: "superuser", logins: 1, date_created: DATE_NOW() }
+    UPDATE { logins: OLD.logins + 1 } IN users
+    RETURN { doc: NEW, type: OLD ? "update" : "insert" }
+    """
+
+    q = Query.query([
+      upsert: %{ name: "superuser" },
+      insert: %{ name: "superuser", logins: 1, date_created: date_now() },
+      update: %{ logins: OLD.logins + 1 },
+      in: :users,
+      return: %{
+        doc: NEW,
+        type: if OLD do
+          "update"
+        else
+          "insert"
+        end
+      }
+    ])
+
+    assert to_string(q) == expected
+
+  end
 end

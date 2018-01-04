@@ -220,6 +220,15 @@ defmodule Durango.Query do
     |> parse_expr(right)
   end
 
+  def parse_expr(%Query{} = q, {:if, _, [conditional, [{:do, do_expr}, {:else, else_expr}]]}) do
+    q
+    |> parse_expr(conditional)
+    |> append_tokens("?")
+    |> parse_expr(do_expr)
+    |> append_tokens(":")
+    |> parse_expr(else_expr)
+  end
+
   def parse_expr(%Query{} = q, {{:., _, [{base, _, nil}, attr]}, _, []}) do
     ensure_in_locals!(q, base)
     append_tokens(q, stringify(base) <> "." <> stringify(attr))
