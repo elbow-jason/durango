@@ -133,12 +133,12 @@ defmodule Durango.Query do
     |> parse_expr(rest1)
     |> parse_query(rest2)
   end
-  def parse_query(%Query{} = q, [{:in, expr} | rest ]) do
-    q
-    |> append_tokens("IN")
-    |> parse_expr(expr)
-    |> parse_query(rest)
-  end
+  # def parse_query(%Query{} = q, [{:in, expr} | rest ]) do
+  #   q
+  #   |> append_tokens("IN")
+  #   |> parse_expr(expr)
+  #   |> parse_query(rest)
+  # end
   def parse_query(%Query{} = q, [{:filter, expr} | rest ]) do
     q
     |> append_tokens("FILTER")
@@ -156,15 +156,6 @@ defmodule Durango.Query do
     |> append_tokens(["OUTBOUND", inspect(graph_node)])
     |> parse_query(rest)
   end
-
-  # def parse_query(%Query{} = q, [{:for, labels}, {:in, collection} | rest ]) do
-  #   labels = extract_labels(labels)
-  #   q
-  #   |> append_tokens(["FOR", stringify(labels, ", "), "IN", stringify(collection)])
-  #   |> put_local_var(labels)
-  #   |> put_collection(labels, collection)
-  #   |> parse_query(rest)
-  # end
 
   def parse_query(%Query{} = q, [{:into, collection} | rest]) do
     q
