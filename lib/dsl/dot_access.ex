@@ -80,6 +80,7 @@ defmodule Durango.Dsl.DotAccess do
 
   defmacro inject_parser() do
     quote do
+
       def parse_query(%Durango.Query{} = q, {{:., _, [_, attr]}, _, rest} = ast) when is_atom(attr) do
         dot = %Durango.Dsl.DotAccess{} = Durango.Dsl.DotAccess.from_quoted(ast)
         token = Durango.Dsl.DotAccess.to_aql(dot)
@@ -105,6 +106,9 @@ defmodule Durango.Dsl.DotAccess do
   end
   def from_quoted({{:., _, [_ | rest ]}, _, _} = ast) when length(rest) > 0 do
     from_quoted(%DotAccess{ast: ast}, ast)
+  end
+  def from_quoted(%DotAccess{} = dot, [ast]) when is_list(ast) do
+    dot
   end
   def from_quoted(%DotAccess{} = dot, {{:., _, [Access, :get]}, _, [rest, key]}) when is_integer(key) when is_atom(key) when is_binary(key) do
     dot

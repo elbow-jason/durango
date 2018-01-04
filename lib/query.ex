@@ -5,11 +5,13 @@ defmodule Durango.Query do
     DotAccess,
     Object,
     Function,
+    # Subquery,
   }
   alias Durango.AQL.{
     ReservedWord,
     Operators,
     Limit,
+    Sort,
   }
   require ReservedWord
   require Operators
@@ -18,6 +20,8 @@ defmodule Durango.Query do
   require Object
   require Limit
   require Function
+  require Sort
+  # require Subquery
 
   defstruct [
     tokens:               [],
@@ -93,6 +97,9 @@ defmodule Durango.Query do
   Limit.inject_parser()
   Object.inject_parser()
   Function.inject_parser()
+  Sort.inject_parser()
+  # Subquery.inject_parser()
+
 
   def parse_query(%Query{} = q, [{:return, expr} | rest ]) do
     q
@@ -198,6 +205,10 @@ defmodule Durango.Query do
   #   q = Enum.reduce(fields, q, fn item, q_acc -> parse_expr(q_acc, item) end)
   #   IO.inspect(reduced, label: :reduced_query_map)
   # end
+
+  def parse_expr(%Query{} = q, {:subquery, _, [ast]}) when is_list(ast) do
+    Durango.Dsl.Subquery.parse_query(q, ast)
+  end
   def parse_expr(%Query{} = q, :in) do
     q
     |> append_tokens("IN")
@@ -223,6 +234,10 @@ defmodule Durango.Query do
     |> append_tokens(token<>"[*")
     |> parse_query(sub_query)
     |> append_tokens("]")
+  end
+  def parse_expr(%Query{} = q, atom) when is_atom(atom) do
+    q
+    |> append_tokens(to_string(atom))
   end
 
 

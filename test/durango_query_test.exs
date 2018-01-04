@@ -306,7 +306,6 @@ defmodule DurangoQueryTest do
     assert to_string(q) == expected
   end
 
-  @tag current: true
   test "query can handle multi pinned-var bracket access" do
     expected = normalize """
     LET doc = { foo: { bar: "baz" } }
@@ -341,6 +340,90 @@ defmodule DurangoQueryTest do
     assert to_string(q) == expected
   end
 
+  test "query can handle sort with one field" do
+    expected = normalize """
+      FOR p IN persons
+        SORT p.age
+        RETURN p
+    """
+    q = Query.query([
+      for: p in :persons,
+      sort: p.age,
+      return: p,
+    ])
+    assert to_string(q) == expected
+  end
 
+  test "query can handle sort with multiple fields" do
+    expected = normalize """
+      FOR p IN persons
+        SORT p.age, p.fist_name, p.last_name
+        RETURN p
+    """
+    q = Query.query([
+      for: p in :persons,
+      sort: [p.age, p.fist_name, p.last_name],
+      return: p,
+    ])
+    assert to_string(q) == expected
+  end
+
+  test "query can handle sort with multiple fields and an order" do
+    expected = normalize """
+      FOR p IN persons
+        SORT p.age, p.fist_name, p.last_name DESC
+        RETURN p
+    """
+    q = Query.query([
+      for: p in :persons,
+      sort: {[p.age, p.fist_name, p.last_name], :DESC},
+      return: p,
+    ])
+    assert to_string(q) == expected
+  end
+
+  test "query can handle sort with an order" do
+    expected = normalize """
+      FOR p IN persons
+        SORT p._id DESC
+        RETURN p
+    """
+    q = Query.query([
+      for: p in :persons,
+      sort: {p._id, :DESC},
+      return: p,
+    ])
+    assert to_string(q) == expected
+  end
+
+
+
+  @tag current: true
+  test "query can handle a subquery" do
+    expected = normalize """
+    FOR p IN persons
+      LET recommendations = (
+        FOR r IN recommendations
+          FILTER p.id == r.person_id
+          SORT p.rank DESC
+          LIMIT 10
+          RETURN r
+      )
+      RETURN { person: p, recommendations: recommendations }
+    """
+    q = Query.query([
+      for: p in :persons,
+      let: recommendations = subquery([
+        for: r, in: :recommendations,
+        filter: p.id == r.person_id,
+        sort: {p.rank, :desc},
+        limit: 10,
+        return: r
+      ]),
+      return: %{person: p, recommendations: recommendations }
+    ])
+
+    assert to_string(q) == expected
+  end
 
 end
