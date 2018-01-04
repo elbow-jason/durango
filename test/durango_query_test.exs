@@ -503,6 +503,7 @@ defmodule DurangoQueryTest do
       ])
 
     assert to_string(q) == expected
+    assert :OLD in q.local_variables
   end
 
 end
