@@ -133,12 +133,7 @@ defmodule Durango.Query do
     |> parse_expr(rest1)
     |> parse_query(rest2)
   end
-  # def parse_query(%Query{} = q, [{:in, expr} | rest ]) do
-  #   q
-  #   |> append_tokens("IN")
-  #   |> parse_expr(expr)
-  #   |> parse_query(rest)
-  # end
+
   def parse_query(%Query{} = q, [{:filter, expr} | rest ]) do
     q
     |> append_tokens("FILTER")
@@ -154,12 +149,6 @@ defmodule Durango.Query do
   def parse_query(%Query{} = q, [{:outbound, graph_node} | rest]) when is_binary(graph_node) do
     q
     |> append_tokens(["OUTBOUND", inspect(graph_node)])
-    |> parse_query(rest)
-  end
-
-  def parse_query(%Query{} = q, [{:into, collection} | rest]) do
-    q
-    |> append_tokens(["INTO", stringify(collection)])
     |> parse_query(rest)
   end
   def parse_query(query, []) do
