@@ -62,6 +62,8 @@ defmodule Durango.Dsl.DotAccess do
         bv
         |> BoundVar.to_aql
         |> wrap_brackets
+      {:bracket, :*} ->
+        wrap_brackets("*")
       {:bracket, item} when item in @modifiers ->
         wrap_brackets("*")
       {:bracket, item} when is_atom(item) when is_binary(item) ->

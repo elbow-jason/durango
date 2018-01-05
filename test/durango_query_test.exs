@@ -297,7 +297,7 @@ defmodule DurangoQueryTest do
         }
     ])
     assert to_string(q) == expected
-    assert q.local_variables == [:u] # current is only available in the object
+    assert q.local_variables == [:u]
   end
 
   test "query can handle let statement" do
@@ -413,9 +413,6 @@ defmodule DurangoQueryTest do
     assert to_string(q) == expected
   end
 
-
-
-  @tag current: true
   test "query can handle a subquery" do
     expected = normalize """
     FOR p IN persons
@@ -783,7 +780,6 @@ defmodule DurangoQueryTest do
     assert to_string(q) == expected
   end
 
-
   test "query can handle a  COLLECT INTO with assignment in the INTO" do
     expected = normalize """
     FOR u IN users
@@ -830,6 +826,35 @@ defmodule DurangoQueryTest do
         country:        country,
         city:           city,
         users_in_city:  users_in_city,
+      }
+    ])
+    assert to_string(q) == expected
+  end
+
+  @tag current: true
+  test "query can handle a COLLECT INTO and KEEP" do
+    expected = normalize """
+    FOR u IN users
+      LET name = u.name
+      LET some_value = u.value1 + u.value2
+      COLLECT city = u.city
+      INTO groups
+      KEEP name
+      RETURN {
+        city: city,
+        user_names: groups[*].name
+      }
+    """
+    q = Durango.query([
+      for: u in :users,
+      let: name = u.name,
+      let: some_value = u.value1 + u.value2,
+      collect: city = u.city,
+      into: groups,
+      keep: name,
+      return: %{
+        city:           city,
+        user_names:     groups[:*].name,
       }
     ])
     assert to_string(q) == expected
