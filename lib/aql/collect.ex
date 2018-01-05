@@ -37,6 +37,19 @@ defmodule Durango.AQL.Collect do
         |> Query.append_tokens(keepers)
         |> Dsl.parse_query(rest)
       end
+      def parse_query(%Query{} = q, [{:collect, coll}, {:with_count_into, into_expr} | rest ]) do
+        coll =
+          coll
+          |> List.wrap
+          |> List.flatten
+        q
+        |> Query.append_tokens("COLLECT")
+        |> Dsl.reduce_assignments(coll, ", ")
+        |> Query.append_tokens("WITH COUNT INTO")
+        |> Dsl.parse_expr(into_expr)
+        |> Dsl.parse_query(rest)
+      end
+
 
       def parse_query(%Query{} = q, [{:collect, coll}, {:into, into_expr} | rest ]) do
         coll =

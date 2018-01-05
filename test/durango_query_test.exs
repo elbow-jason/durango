@@ -859,7 +859,6 @@ defmodule DurangoQueryTest do
     assert to_string(q) == expected
   end
 
-  @tag current: true
   test "query can handle COLLECT WITH COUNT INTO" do
     expected = normalize """
       FOR u IN users
@@ -870,6 +869,30 @@ defmodule DurangoQueryTest do
       for: u in :users,
       collect_with_count_into: counted,
       return: counted
+    ])
+    assert to_string(q) == expected
+  end
+
+  @tag current: true
+  test "query can handle COLLECT item WITH COUNT INTO" do
+    expected = normalize """
+
+      FOR u IN users
+        COLLECT age = u.age WITH COUNT INTO counted
+        RETURN {
+          age: age,
+          count: counted
+        }
+
+    """
+    q = Durango.query([
+      for: u in :users,
+      collect: age = u.age,
+      with_count_into: counted,
+      return: %{
+        age: age,
+        count: counted,
+      }
     ])
     assert to_string(q) == expected
   end
