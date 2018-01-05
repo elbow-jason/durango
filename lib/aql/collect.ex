@@ -65,6 +65,13 @@ defmodule Durango.AQL.Collect do
         |> Dsl.reduce_assignments([assignment], ", ")
         |> Dsl.parse_query(rest)
       end
+      def parse_query(%Query{} = q, [{:collect_with_count_into, label} | rest ]) do
+        labels = Dsl.Helpers.extract_labels(label)
+        q
+        |> Query.append_tokens("COLLECT WITH COUNT INTO")
+        |> Query.append_tokens(labels)
+        |> Dsl.parse_query(rest)
+      end
     end
   end
 
