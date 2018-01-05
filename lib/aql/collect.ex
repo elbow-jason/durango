@@ -17,17 +17,37 @@ defmodule Durango.AQL.Collect do
 
       alias Durango.Query
       alias Durango.Dsl
+      def parse_query(%Query{} = q, [{:collect, coll}, {:aggregate, agg} | rest ]) do
+        agg =
+          agg
+          |> List.wrap
+          |> List.flatten
+          |> Enum.filter(fn item -> item end)
+        coll =
+          coll
+          |> List.wrap
+          |> List.flatten
+          |> Enum.filter(fn item -> item end)
+        q
+        |> Query.append_tokens("COLLECT")
+        |> Dsl.reduce_assignments(coll, ", ")
+        |> Query.append_tokens("AGGREGATE")
+        |> Dsl.reduce_assignments(agg, ", ")
+        |> Dsl.parse_query(rest)
+      end
       def parse_query(%Query{} = q, [{:collect, coll}, {:into, into_expr}, {:keep, keepers} | rest ])  do
         keepers =
           keepers
           |> List.wrap
           |> List.flatten
+          |> Enum.filter(fn item -> item end)
           |> Dsl.Helpers.extract_labels
           |> Enum.join(", ")
         coll =
           coll
           |> List.wrap
           |> List.flatten
+          |> Enum.filter(fn item -> item end)
         q
         |> Query.append_tokens("COLLECT")
         |> Dsl.reduce_assignments(coll, ", ")

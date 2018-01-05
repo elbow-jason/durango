@@ -45,9 +45,19 @@ defmodule Durango.Dsl.Function do
       def parse_expr(%Query{} = q, {func_name, _, args}) when func_name in @function_names do
         arity = Keyword.fetch!(@functions, func_name)
         Function.validate!({func_name, arity}, args)
+        # args_query =
+        #   %Query{bound_variables: q.bound_variables}
+        #   |> Dsl.parse_expr(args)
         args_query =
           Enum.reduce(args, %Query{bound_variables: q.bound_variables}, fn arg, q_acc ->
-            Dsl.parse_expr(q_acc, arg)
+            new_q =
+              %Query{bound_variables: q_acc.bound_variables}
+              |> Dsl.parse_expr(arg)
+            %{ q_acc |
+              bound_variables: new_q.bound_variables,
+
+            }
+            |> Query.append_tokens(Enum.join(new_q.tokens, " "))
           end)
         func_token =
           [

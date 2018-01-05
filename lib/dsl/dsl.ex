@@ -1,5 +1,5 @@
 defmodule Durango.Dsl do
-  alias Durango.Query
+  alias Durango.{Query, Dsl}
   alias Durango.Dsl.{
     BoundVar,
     DotAccess,
@@ -75,11 +75,32 @@ defmodule Durango.Dsl do
   end
 
 
-  def parse_query(query, []) do
+
+
+  def parse_query(%Query{} = q, []) do
     # this function must come after all parsers.
     # this function is a finalizer for compilation.
-    %{ query | tokens: query.tokens |> Enum.join(" ") |> List.wrap }
+    all_tokens =
+       q.tokens
+       |> Enum.map(&to_string/1)
+       |> Enum.map(&String.trim/1)
+       |> Enum.filter(fn
+         ""   -> false
+         nil  -> false
+         item -> item
+       end)
+       |> Enum.join(" ")
+       |> String.trim
+       |> List.wrap
+    %{ q | tokens: all_tokens }
   end
+  def parse_query(%Query{} = q, [ next | rest ]) do
+    q
+    |> Dsl.parse_expr(next)
+    |> Dsl.parse_query(rest)
+  end
+
+
 
   def parse_expr(%Query{} = q, {:__aliases__, _, [:OLD]}) do
     if :OLD in q.local_variables do
@@ -197,10 +218,18 @@ defmodule Durango.Dsl do
             bound_variables: q_acc.bound_variables,
           }
           |> Dsl.parse_expr(expr)
-
         { item_query, tokens ++ [Enum.join(item_query.tokens, " ")] }
     end)
-    joined_tokens = Enum.join(all_tokens, sep)
+    joined_tokens =
+      all_tokens
+      |> Enum.map(&String.trim/1)
+      |> Enum.filter(fn
+        "" -> false
+        _ -> true
+      end)
+      |> Enum.join(sep)
+      |> String.trim
+
     %{ q |
       bound_variables: Map.merge(q.bound_variables, updated_bound_vars),
       local_variables: q.local_variables ++ updated_local_vars,

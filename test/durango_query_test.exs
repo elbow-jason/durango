@@ -897,4 +897,52 @@ defmodule DurangoQueryTest do
     assert to_string(q) == expected
   end
 
+  test "query can handle COLLECT AGGREGATE" do
+    expected = normalize """
+      FOR u IN users
+        COLLECT age_group = FLOOR(u.age / 5) * 5
+        AGGREGATE min_age = MIN(u.age), max_age = MAX(u.age)
+        RETURN {
+          age_group:  age_group,
+          min_age:    min_age,
+          max_age:    max_age
+        }
+    """
+    q = Durango.query([
+      for: u in :users,
+      collect: age_group = floor(u.age / 5) * 5,
+      aggregate: [
+        min_age = min(u.age),
+        max_age = max(u.age),
+      ],
+      return: %{
+        age_group:  age_group,
+        min_age:    min_age,
+        max_age:    max_age,
+      }
+    ])
+    assert to_string(q) == expected
+  end
+
+  test "query can handle COLLECT AGGREGATE with no COLLECT as nil" do
+    expected = normalize """
+      FOR u IN users
+        COLLECT AGGREGATE min_age = MIN(u.age), max_age = MAX(u.age)
+        RETURN {
+          min_age: min_age,
+          max_age: max_age
+        }
+    """
+    q = Durango.query([
+      for: u in :users,
+      collect: nil,
+      aggregate: [min_age = min(u.age), max_age = max(u.age)],
+      return: %{
+        min_age: min_age,
+        max_age: max_age,
+      }
+    ])
+    assert to_string(q) == expected
+  end
+
 end
