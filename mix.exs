@@ -4,10 +4,14 @@ defmodule Durango.Mixfile do
   def project do
     [
       app: :durango,
-      version: "0.1.0",
+      version: "0.1.0a",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
-      deps: deps()
+      deps: deps(),
+      description: description(),
+      package: package(),
+      name: "Durango",
+      source_url: "https://github.com/elbow-jason/durango",
     ]
   end
 
@@ -25,6 +29,23 @@ defmodule Durango.Mixfile do
       {:jason, "~> 1.0-rc"},
       {:httpoison, "~> 0.13"},
       {:gen_util, "~> 0.1.0"},
+      {:ex_doc, "~> 0.14", only: :dev},
+    ]
+  end
+
+  defp description() do
+    "A database wrapper for ArangoDB"
+  end
+
+  defp package() do
+    [
+      # This option is only needed when you don't want to use the OTP application name
+      name: "durango",
+      # These are the default files included in the package
+      files: ["lib", "priv", "mix.exs", "README*", "readme*", "LICENSE*", "license*"],
+      maintainers: ["Jason Goldberger"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/elbow-jason/durango"}
     ]
   end
 end
