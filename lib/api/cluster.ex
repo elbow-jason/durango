@@ -12,7 +12,7 @@ defmodule Durango.Api.Cluster do
   GET /_admin/cluster-test
   Execute cluster roundtrip
 
-  HEAD, POST, and PUT for ``/_admin/cluster-test`
+  HEAD, POST, and PUT for `/_admin/cluster-test`
   are redundant and have been omitted from Durango.
   """
   def execute_roundtrip(repo) do
