@@ -20,10 +20,12 @@ defmodule Durango.Document do
         unquote(collection)
       end
       unquote(block)
-      def bef() do
-        :bef
+      def __document__(:fields) do
+        @fields
       end
-      @before_compile Durango.Document
+      defstruct Keyword.keys(@fields)
+
+      # @before_compile Durango.Document
     end
   end
 
@@ -33,16 +35,11 @@ defmodule Durango.Document do
     end
   end
 
-  defmacro __before_compile__(_env) do
-    quote do
-      def __document__(:fields) do
-        @fields
-      end
+  # defmacro __before_compile__(_env) do
+  #   quote do
 
-      defstruct Keyword.keys(@fields)
-
-    end
-  end
+  #   end
+  # end
 
   def is_document?(%module{}) do
     is_document?(module)
