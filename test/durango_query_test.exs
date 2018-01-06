@@ -69,7 +69,7 @@ defmodule DurangoQueryTest do
     ])
     assert to_string(q) == expected
     assert q.bound_variables == %{
-      counted: %Durango.Dsl.BoundVar{key: :counted, validations: [], value: 10},
+      counted: %Durango.Dsl.BoundVar{key: :counted, value: 10},
     }
   end
 
@@ -82,7 +82,7 @@ defmodule DurangoQueryTest do
       return: u,
     ])
     assert to_string(query) == "FOR u IN users FILTER u.age >= @min_age RETURN u"
-    assert query.bound_variables == %{min_age: %Durango.Dsl.BoundVar{key: :min_age, validations: [], value: 18}}
+    assert query.bound_variables == %{min_age: %Durango.Dsl.BoundVar{key: :min_age, value: 18}}
   end
 
   test "query can parse a dot_access return value" do
@@ -187,7 +187,7 @@ defmodule DurangoQueryTest do
     my_map = %{name: "Jason"}
     q = Durango.query(return: ^my_map.name)
     assert to_string(q) == "RETURN @my_map_name"
-    assert q.bound_variables == %{"my_map_name" => %Durango.Dsl.BoundVar{key: "my_map_name", validations: [], value: "Jason"}}
+    assert q.bound_variables == %{"my_map_name" => %Durango.Dsl.BoundVar{key: "my_map_name", value: "Jason"}}
   end
 
   test "query can handle star bracket access [:ALL]" do
@@ -271,7 +271,7 @@ defmodule DurangoQueryTest do
       return: p,
     ])
     assert to_string(q) == expected
-    assert q.bound_variables == %{:some_key =>%Durango.Dsl.BoundVar{key: :some_key, validations: [], value: "name"}}
+    assert q.bound_variables == %{:some_key =>%Durango.Dsl.BoundVar{key: :some_key, value: "name"}}
   end
 
   test "query can handle a subquery and CURRENT variable" do
@@ -336,8 +336,8 @@ defmodule DurangoQueryTest do
     ])
     assert to_string(q) == expected
     assert q.bound_variables == %{
-      key1: %Durango.Dsl.BoundVar{key: :key1, validations: [], value: :foo},
-      key2: %Durango.Dsl.BoundVar{key: :key2, validations: [], value: :bar},
+      key1: %Durango.Dsl.BoundVar{key: :key1, value: :foo},
+      key2: %Durango.Dsl.BoundVar{key: :key2, value: :bar},
     }
   end
 
@@ -944,5 +944,13 @@ defmodule DurangoQueryTest do
     ])
     assert to_string(q) == expected
   end
+
+  test "query can jsonify bound vars" do
+    q = Durango.query([
+      for: p in Person, return: u
+    ])
+    assert Durango.Query.bound_vars_json(q) == %{} 
+  end
+
 
 end

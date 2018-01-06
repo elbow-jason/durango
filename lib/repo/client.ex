@@ -14,7 +14,7 @@ defmodule Durango.Repo.Client do
     |> Map.put(:path, path)
     |> Map.put(:query, query)
     |> to_string
-    |> IO.inspect(label: :url)
+    # |> IO.inspect(label: :url)
   end
 
   def send_request(repo, method, path, body \\ "", query \\ nil) do

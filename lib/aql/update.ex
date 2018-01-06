@@ -21,7 +21,7 @@ defmodule Durango.AQL.Update do
         |> Query.append_tokens("WITH")
         |> Dsl.parse_expr(with_expr)
         |> Query.append_tokens(in_token)
-        |> Dsl.parse_expr(in_expr)
+        |> Dsl.parse_collection_name(in_expr)
         |> Dsl.parse_query(rest)
       end
       def parse_query(%Query{} = q, [{:update, update_expr}, {:with, with_expr} | rest ]) do
@@ -41,7 +41,7 @@ defmodule Durango.AQL.Update do
         |> Query.append_tokens("UPDATE")
         |> Dsl.parse_expr(update_expr)
         |> Query.append_tokens("IN")
-        |> Dsl.parse_expr(in_expr)
+        |> Dsl.parse_collection_name(in_expr)
         |> Dsl.parse_query(rest)
       end
       def parse_query(%Query{} = q, [{:update, update_expr}, {:in, in_expr} | rest]) do
@@ -51,7 +51,7 @@ defmodule Durango.AQL.Update do
         |> Query.append_tokens("UPDATE")
         |> Dsl.parse_expr(update_expr)
         |> Query.append_tokens("IN")
-        |> Dsl.parse_expr(in_expr)
+        |> Dsl.parse_collection_name(in_expr)
         |> Dsl.parse_query(rest)
       end
 

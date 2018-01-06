@@ -2,6 +2,7 @@ defmodule DurangoExample.Person do
   use Durango.Document
 
   document :persons do
-    :ok
+    field :name, :string
+    field :age,  :integer
   end
 end

@@ -4,6 +4,10 @@ defmodule Durango.Document do
     quote do
       require Durango.Document
       import Durango.Document
+      Module.register_attribute(__MODULE__, :fields, accumulate: true)
+      Module.put_attribute(__MODULE__, :fields, {:_id, nil})
+      Module.put_attribute(__MODULE__, :fields, {:_key, nil})
+      Module.put_attribute(__MODULE__, :fields, {:_rev, nil})
     end
   end
 
@@ -16,6 +20,27 @@ defmodule Durango.Document do
         unquote(collection)
       end
       unquote(block)
+      def bef() do
+        :bef
+      end
+      @before_compile Durango.Document
+    end
+  end
+
+  defmacro field(name, type \\ :any, options \\ []) do
+    quote do
+      Module.put_attribute(__MODULE__, :fields, {unquote(name),  unquote(options) |> Enum.into(%{}) |> Map.put(:type, unquote(type)) })
+    end
+  end
+
+  defmacro __before_compile__(_env) do
+    quote do
+      def __document__(:fields) do
+        @fields
+      end
+
+      defstruct Keyword.keys(@fields)
+
     end
   end
 

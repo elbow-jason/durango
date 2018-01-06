@@ -4,43 +4,42 @@ defmodule Durango.Dsl.BoundVar do
   defstruct [
     key:          nil,
     value:        nil,
-    validations:  [],
+    keytype:      nil,
   ]
 
-  def new(key, value, validations \\ []) when (is_atom(key) or is_binary(key)) and is_list(validations) do
+  def new(key, value) when (is_atom(key) or is_binary(key)) do
     %BoundVar{
       key: key,
       value: value,
-      validations: validations,
+      keytype: nil,
     }
   end
 
-  def put_validation(%BoundVar{} = bv, validation) do
-    %{ bv | validations: [validation | bv.validations]}
+  def put_keytype(%BoundVar{} = bv, keytype) do
+    %{ bv | keytype: keytype }
   end
 
-
-  def validate(%BoundVar{validations: validations} = bv) do
-    validations
-    |> Enum.map(fn validation -> validate(bv, validation) end)
-    |> Enum.filter(fn
-      :ok -> nil
-      _ -> true
-    end)
-    |> case do
-      [] -> :ok
-      errors ->
-      {:error, errors |> Enum.map(fn {:error, reason} -> reason end) }
-    end
-  end
-
-  def validate(%BoundVar{value: value}, :int_required) when is_integer(value) do
-    :ok
-  end
-
-  def validate(bv, validation) do
-    {:error, "Durango bound variable #{inspect bv.key} failed validation #{inspect validation} for value #{inspect bv.value}"}
-  end
+  # def validate(%BoundVar{validations: validations} = bv) do
+  #   validations
+  #   |> Enum.map(fn validation -> validate(bv, validation) end)
+  #   |> Enum.filter(fn
+  #     :ok -> nil
+  #     _ -> true
+  #   end)
+  #   |> case do
+  #     [] -> :ok
+  #     errors ->
+  #     {:error, errors |> Enum.map(fn {:error, reason} -> reason end) }
+  #   end
+  # end
+  #
+  # def validate(%BoundVar{value: value}, :int_required) when is_integer(value) do
+  #   :ok
+  # end
+  #
+  # def validate(bv, validation) do
+  #   {:error, "Durango bound variable #{inspect bv.key} failed validation #{inspect validation} for value #{inspect bv.value}"}
+  # end
 
   defmacro inject_parser() do
     quote do
@@ -116,9 +115,48 @@ defmodule Durango.Dsl.BoundVar do
   end
 
 
+  def json_key(%BoundVar{key: key, keytype: :collection}) do
+    "@" <> to_string(key)
+  end
+  def json_key(%BoundVar{key: key}) do
+    to_string(key)
+  end
 
+  def json_value(%BoundVar{keytype: :collection, value: value}) when is_atom(value) do
+    if Durango.Document.is_document?(value) do
+      value.__document__(:collection) |> to_string
+    else
+      to_string(value)
+    end
+  end
+  def json_value(%BoundVar{value: value}) when is_atom(value) do
+    to_string(value)
+  end
+  def json_value(%BoundVar{value: %_{} = doc}) do
+    doc
+    |> Map.from_struct()
+    |> Enum.filter(fn
+      {:__struct__, _}  -> false
+      {:_id, _}         -> false
+      {:_key, nil}      -> false
+      {:_rev, nil}      -> false
+      _                 -> true
+    end)
+    |> Enum.into(%{})
+  end
+  def json_value(%BoundVar{value: list}) when is_list(list) do
+    Enum.map(list, &json_value/1)
+  end
+  def json_value(%BoundVar{value: value}) do
+    value
+  end
+
+  def to_aql(%BoundVar{key: key, keytype: :collection}) do
+    "@@" <> to_string(key)
+  end
   def to_aql(%BoundVar{key: key}) do
     "@" <> to_string(key)
   end
+
 
 end

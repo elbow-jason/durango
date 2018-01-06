@@ -24,6 +24,7 @@ defmodule Durango.Mixfile do
     [
       {:jason, "~> 1.0-rc"},
       {:httpoison, "~> 0.13"},
+      {:gen_util, "~> 0.1.0"},
     ]
   end
 end
