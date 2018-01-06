@@ -1,21 +1,9 @@
 # Durango
 
-**TODO: Add description**
+Durango is a database wrapper for ArangoDB.
 
-## Installation
+This is alpha software for the moment.
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `durango` to your list of dependencies in `mix.exs`:
+I will be adding more features rapidly over the next few weeks and months.
 
-```elixir
-def deps do
-  [
-    {:durango, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/durango](https://hexdocs.pm/durango).
-
+PRs with passing tests are welcome.
