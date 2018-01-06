@@ -2,7 +2,7 @@ defmodule DurangoDocumentTest do
   use ExUnit.Case
   doctest Durango.Document
   require Durango
-  alias DurangoExample.{Person, Repo}
+  alias DurangoExample.{Person} #, Repo}
 
   test "query can handle document models" do
     %person_collection{} = person = %Person{

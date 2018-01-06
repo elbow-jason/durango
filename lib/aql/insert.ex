@@ -23,17 +23,7 @@ defmodule Durango.AQL.Insert do
         |> Dsl.parse_query(rest)
       end
 
-      def parse_collection_name(%Query{} = q, collection) when is_atom(collection) do
-        q
-        |> Query.append_tokens(to_string(collection))
-      end
-      def parse_collection_name(%Query{} = q, %Durango.Dsl.BoundVar{} = bv) do
-        bv = bv |> BoundVar.put_keytype(:collection)
-        token = BoundVar.to_aql(bv)
-        q
-        |> Query.append_tokens(token)
-        |> Query.put_bound_var(bv)
-      end
+
 
     end
   end
