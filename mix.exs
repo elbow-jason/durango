@@ -4,7 +4,7 @@ defmodule Durango.Mixfile do
   def project do
     [
       app: :durango,
-      version: "0.1.0a",
+      version: "0.1.0-a",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
       deps: deps(),
@@ -42,7 +42,7 @@ defmodule Durango.Mixfile do
       # This option is only needed when you don't want to use the OTP application name
       name: "durango",
       # These are the default files included in the package
-      files: ["lib", "priv", "mix.exs", "README*", "readme*", "LICENSE*", "license*"],
+      files: ["lib", "mix.exs", "README*", "LICENSE*"],
       maintainers: ["Jason Goldberger"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/elbow-jason/durango"}
