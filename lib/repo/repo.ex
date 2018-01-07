@@ -152,7 +152,6 @@ defmodule Durango.Repo do
   end
 
   def upsert_query(%doc_collection{} = doc) do
-    doc_id = doc._id
     Durango.query([
       upsert: %{ _id: ^doc._id },
       insert: ^doc,
