@@ -69,6 +69,10 @@ defmodule Durango.Repo do
         Durango.Repo.remove(__MODULE__, item)
       end
 
+      def upsert(item) do
+        Durango.Repo.upsert(__MODULE__, item)
+      end
+
     end
   end
 
@@ -137,6 +141,24 @@ defmodule Durango.Repo do
       remove: item,
       in: ^doc_collection,
       return: OLD,
+    ])
+  end
+
+  def upsert(repo, doc) do
+    ensure_document!(doc, :remove)
+    repo
+    |> execute(upsert_query(doc))
+    |> into(doc)
+  end
+
+  def upsert_query(%doc_collection{} = doc) do
+    doc_id = doc._id
+    Durango.query([
+      upsert: %{ _id: ^doc._id },
+      insert: ^doc,
+      update: ^doc,
+      in: ^doc_collection,
+      return: NEW,
     ])
   end
 

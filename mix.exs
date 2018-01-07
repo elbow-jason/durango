@@ -4,7 +4,7 @@ defmodule Durango.Mixfile do
   def project do
     [
       app: :durango,
-      version: "0.1.1-a",
+      version: "0.1.2-a",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
       deps: deps(),

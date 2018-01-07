@@ -28,7 +28,7 @@ defmodule Durango.AQL.Upsert do
         |> Query.append_tokens(change_token)
         |> Dsl.parse_expr(change_expr)
         |> Query.append_tokens(in_token)
-        |> Dsl.parse_expr(in_expr)
+        |> Dsl.parse_collection_name(in_expr)
         |> Dsl.parse_query(rest)
       end
     end

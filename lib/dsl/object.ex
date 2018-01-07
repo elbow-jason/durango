@@ -35,7 +35,12 @@ defmodule Durango.Dsl.Object do
         end)
         obj = %Object{fields: fields_query}
         body = Object.render_body(obj)
-        q
+        bound_vars =
+          fields_query
+          |> Enum.reduce(%{}, fn {_, value}, bv_acc ->
+            Map.merge(bv_acc, value.bound_variables)
+          end)
+        %{ q | bound_variables: Map.merge(q.bound_variables, bound_vars) }
         |> Query.append_tokens("{ " <> body <> " }")
       end
     end

@@ -61,5 +61,13 @@ defmodule DurangoRepoTest do
     assert Repo.get(Person, person._key) == nil
   end
 
+  test "upsert works" do
+    assert %Person{} = person1 = %Person{name: :blep, age: 3} |> Repo.upsert
+    assert %Person{} = person2 = Repo.upsert(%{ person1 | name: :flomp })
+    assert person1._id == person2._id
+    # assert person1._rev != person2._rev
+    assert person1.name == "blep"
+    assert person2.name == "flomp"
+  end
 
 end
