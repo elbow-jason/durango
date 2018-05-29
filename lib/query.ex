@@ -54,6 +54,9 @@ defmodule Durango.Query do
   def put_collection(%Query{} = q, labels, module) when is_list(labels) and is_atom(module) do
     Enum.reduce(labels, q, fn l, q_acc -> put_collection(q_acc, l, module) end)
   end
+  def put_collection(%Query{} = q, labels, {_func, _meta, [coll | _]}) do
+    put_collection(q, labels, coll)
+  end
 
   def ensure_in_locals!(%Query{local_variables: locals}, item) do
     unless name = Durango.Dsl.Helpers.base_name(item) in locals do

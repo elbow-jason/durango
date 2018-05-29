@@ -47,16 +47,38 @@ defmodule Durango.Dsl.Helpers do
   def stringify({item, _, nil}) when is_atom(item) do
     to_string(item)
   end
+  def stringify({item, _, args}) when is_atom(item) and is_list(args) do
+    args_count = length(args)
+    case Durango.Dsl.Function.Names.functions() |> Keyword.get(item) do
+      start..fin when args_count >= start and args_count <= fin ->
+        render_function(item, args)
+      other ->
+        raise "Unrecognized function #{item} with arity #{args_count} found: #{inspect other}"
+    end
+  end
+
+  defp render_function(name, [coll | rest]) do
+    func_name =
+      name
+      |> to_string
+      |> String.upcase
+    coll = if Durango.Document.is_document?(coll) do
+      coll.__document__(:collection)
+    else
+      coll
+    end
+    rest_args = Enum.map(rest, &inspect/1)
+    func_name <> "(" <> Enum.join([coll | rest_args], ", ") <> ")"
+  end
+  defp render_function(name, []) do
+    name
+    |> to_string
+    |> String.upcase
+    |> Kernel.<>("()")
+  end
 
   def var_name({:__aliases__, _, parts}) do
-    parts
-    |> Module.concat
-    # |> case do
-    #   # string when is_binary(string) ->
-    #   #   String.to_existing_atom(string)
-    #   atom when is_atom(atom) ->
-    #     atom
-    # end
+    Module.concat(parts)
   end
   def var_name({name, _, _}) when is_atom(name) do
     name

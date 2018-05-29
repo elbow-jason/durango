@@ -952,4 +952,12 @@ defmodule DurangoQueryTest do
   end
 
 
+  test "query can handle functions as collections" do
+    q = Durango.query(for: d in fulltext(:persons, "bio", "jason"), return: d)
+    expected = normalize """
+      FOR d IN FULLTEXT(persons, \"bio\", \"jason\") RETURN d
+    """
+    assert to_string(q) == expected
+  end
+
 end
