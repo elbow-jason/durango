@@ -52,7 +52,7 @@ defmodule Durango.Repo do
 
       defp refresh_token(interval) do
         Durango.Repo.Auth.refresh_token(__MODULE__)
-        Process.send_after(self(), :refresh_token, interval) # 12 hrs
+        Process.send_after(self(), :refresh_token, interval)
       end
 
       def handle_info(:refresh_token, state) do
