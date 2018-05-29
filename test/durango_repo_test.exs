@@ -5,7 +5,7 @@ defmodule DurangoRepoTest do
 
   alias DurangoExample.{Repo, Person}
   setup do
-    DurangoExample.Repo.start_link(nil)
+    DurangoExample.Repo.start_link([])
     :ok
   end
 

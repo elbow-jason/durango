@@ -1,7 +1,7 @@
 c "example/repo.exs"
 c "example/person.exs"
 
-DurangoExample.Repo.start_link(nil)
+DurangoExample.Repo.start_link([])
 
 require Durango.Query
 

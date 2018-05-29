@@ -353,7 +353,6 @@ defmodule DurangoQueryTest do
       },
       in: users,
     ])
-    # IO.inspect(q.tokens, label: "the_tokens")
     assert to_string(q) == expected
   end
 
@@ -949,7 +948,7 @@ defmodule DurangoQueryTest do
     q = Durango.query([
       for: p in Person, return: u
     ])
-    assert Durango.Query.bound_vars_json(q) == %{} 
+    assert Durango.Query.bound_vars_json(q) == %{}
   end
 
 

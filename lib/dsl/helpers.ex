@@ -51,12 +51,12 @@ defmodule Durango.Dsl.Helpers do
   def var_name({:__aliases__, _, parts}) do
     parts
     |> Module.concat
-    |> case do
-      string when is_binary(string) ->
-        String.to_existing_atom(string)
-      atom when is_atom(atom) ->
-        atom
-    end
+    # |> case do
+    #   # string when is_binary(string) ->
+    #   #   String.to_existing_atom(string)
+    #   atom when is_atom(atom) ->
+    #     atom
+    # end
   end
   def var_name({name, _, _}) when is_atom(name) do
     name

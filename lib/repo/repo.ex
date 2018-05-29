@@ -1,49 +1,62 @@
 defmodule Durango.Repo do
-  use GenServer
+  # use GenServer
 
-  defmacro __using__(opts) do
+  defmacro __using__(using_opts) do
     quote do
 
-      @name unquote(opts[:name])
-      if is_nil(@name) do
-        msg = "Durango.Repo requires a :name keyword when using `use Durango.Repo`"
-        raise %CompileError{description: msg}
+      def __config__() do
+        case :ets.lookup(__MODULE__, :config) do
+          [{_, config}] ->
+            config
+          _ ->
+            raise "Config not found for #{__MODULE__}"
+        end
       end
 
-      @config   [name: @name] ++ Application.get_env(:durango, @name)
-      @username @config[:username]
-      @password @config[:password]
-      @database @config[:database]
+      @twelve_hours 1000 * 60 * 60 * 12
 
-      @uri %URI{
-        scheme: @config[:scheme],
-        host:   @config[:host],
-        port:   @config[:port],
-      }
-
-      def __config__(),           do: @config
-      def __config__(:name),      do: @name
-      def __config__(:username),  do: @username
-      def __config__(:password),  do: @password
-      def __config__(:uri),       do: @uri
-      def __config__(:database),  do: @database
-
-      def start_link(_) do
-        GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+      defp get_key(key, overrides_kwargs, config_kwargs, default \\ nil) do
+        Keyword.get(overrides_kwargs, key) || Keyword.get(config_kwargs, key) || default
       end
 
-      def init(_) do
-        refresh_token()
+      def start_link(passed_options \\ []) do
+        using_options = unquote(using_opts)
+        otp_app = passed_options[:otp_app] || using_options[:otp_app]
+        if is_nil(otp_app) do
+          message = "Durango.Repo requires key :otp_app keyword when using `use Durango.Repo`"
+          raise %ArgumentError{message: message}
+        end
+        configured_options = Application.get_env(otp_app, __MODULE__, [])
+        uri = %URI{
+          scheme: get_key(:scheme, passed_options, configured_options),
+          host:   get_key(:host, passed_options, configured_options),
+          port:   get_key(:port, passed_options, configured_options),
+        }
+        configuration = %{
+          name: __MODULE__,
+          token_refresh_interval: get_key(:token_refresh_interval, passed_options, configured_options, @twelve_hours),
+          username: get_key(:username, passed_options, configured_options),
+          password: get_key(:password, passed_options, configured_options),
+          uri: get_key(:uri, passed_options, configured_options, uri),
+          database: get_key(:database, passed_options, configured_options),
+        }
+        :ets.new(__MODULE__, [:named_table, :set, :protected])
+        :ets.insert(__MODULE__, {:config, configuration})
+        GenServer.start_link(__MODULE__, configuration, name: __MODULE__)
+      end
+
+      def init(state) do
+        refresh_token(state.token_refresh_interval)
         {:ok, nil}
       end
 
-      defp refresh_token() do
+      defp refresh_token(interval) do
         Durango.Repo.Auth.refresh_token(__MODULE__)
-        Process.send_after(self(), :refresh_token, 1000 * 60 * 60 * 12) # 12 hrs
+        Process.send_after(self(), :refresh_token, interval) # 12 hrs
       end
 
-      def handle_info(:refresh_token) do
-        refresh_token()
+      def handle_info(:refresh_token, state) do
+        refresh_token(state.token_refresh_interval)
       end
 
       alias Durango.Query

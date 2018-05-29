@@ -11,15 +11,13 @@ defmodule Durango.Dsl.Quoter do
   defmacro __before_compile__(_env) do
     quote do
 
-      def from_quoted({:%{}, meta, args}) when is_list(args) do
-        {:%{}, meta, args |> from_quoted}
-      end
+      # def from_quoted({:%{}, meta, args}) when is_list(args) do
+      #   {:%{}, meta, args |> from_quoted}
+      # end
       def from_quoted({label, meta, args}) when is_list(args) and is_atom(label) do
-        # IO.inspect({is_atom(label), label}, label: :label_was_atom)
         {label, meta, args |> from_quoted}
       end
       def from_quoted({{_, _, _} = label, meta, args}) do
-        # IO.inspect({is_atom(label), label}, label: :label_was_triple)
         {from_quoted(label), meta, from_quoted(args)}
       end
       def from_quoted(list) when is_list(list) do

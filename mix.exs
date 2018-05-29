@@ -4,7 +4,7 @@ defmodule Durango.Mixfile do
   def project do
     [
       app: :durango,
-      version: "0.1.2-a",
+      version: "0.1.3",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
       deps: deps(),
@@ -26,7 +26,7 @@ defmodule Durango.Mixfile do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:jason, "~> 1.0-rc"},
+      {:jason, "~> 1.0"},
       {:httpoison, "~> 0.13"},
       {:gen_util, "~> 0.1.0"},
       {:ex_doc, "~> 0.14", only: :dev},

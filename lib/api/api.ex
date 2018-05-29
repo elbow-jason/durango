@@ -20,7 +20,7 @@ defmodule Durango.Api do
   def path(repo, subpath) do
     "/"<>Path.join([
       "_db",
-      repo.__config__(:database),
+      repo.__config__()[:database],
       subpath,
     ])
   end

@@ -5,16 +5,15 @@ defmodule Durango.Repo.Client do
       "Accept": "application/json",
       "Content-Type": "application/json; charset=utf-8",
     ]
-    # |> IO.inspect(label: :headers)
   end
 
   def url(repo, path, query) do
+    uri = repo.__config__()[:uri]
     query = Durango.Api.Request.render_querystring(query)
-    repo.__config__(:uri)
+    uri
     |> Map.put(:path, path)
     |> Map.put(:query, query)
     |> to_string
-    # |> IO.inspect(label: :url)
   end
 
   def send_request(repo, method, path, body \\ "", query \\ nil) do
@@ -34,13 +33,13 @@ defmodule Durango.Repo.Client do
     end
   end
   def send_request!(repo, method, path, body \\ "", query \\ nil) do
-    case HTTPoison.request!(method, url(repo, path, query), body, headers(repo)) do
-      %{status_code: code, body: body} when code in 200..202 ->
+    case HTTPoison.request(method, url(repo, path, query), body, headers(repo)) do
+      {:ok, %{status_code: code, body: body}} when code in 200..202 ->
         Jason.decode(body)
-      %{status_code: code} -> # = resp ->
+      {:ok, %{status_code: code}} ->
         # IO.puts("Bad Response #{inspect resp}", :stderr)
         raise "Durango.Repo.Client bad response #{code} for connection to #{inspect repo.__config__(:name)}"
-      %{reason: reason} ->
+      {:error, %HTTPoison.Error{reason: reason}} ->
         raise "Durango.Repo.Client bad response #{reason} for connection to #{inspect repo.__config__(:name)}"
     end
   end

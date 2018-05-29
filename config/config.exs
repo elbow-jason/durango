@@ -29,7 +29,7 @@ use Mix.Config
 #
 # import_config "#{Mix.env}.exs"
 
-config :durango, :example_repo,
+config :durango, DurangoExample.Repo,
   scheme:   "http",
   host:     "localhost",
   port:     8529,

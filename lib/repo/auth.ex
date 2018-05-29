@@ -1,27 +1,27 @@
 defmodule Durango.Repo.Auth do
-  use GenServer
 
   def start_table do
     :ets.new(__MODULE__, [:set, :public, :named_table])
   end
 
   def refresh_token(repo) do
+    config = repo.__config__()
     body = Jason.encode!(%{
-      username: repo.__config__(:username),
-      password: repo.__config__(:password),
+      username: config[:username],
+      password: config[:password],
     })
     url =
-      repo.__config__(:uri)
+      config
+      |> Map.fetch!(:uri)
       |> Map.put(:path, "/_open/auth")
       |> to_string
-    HTTPoison.request!(:post, url, body)
-    |> case do
-      %{status_code: 200, body: body} ->
+    case HTTPoison.request(:post, url, body, [], []) do
+      {:ok, %{status_code: 200, body: body}} ->
         Jason.decode!(body)
-      %{status_code: code}->
-        raise "Invalid Durango.Repo.Auth response #{code} for #{repo.__config__(:name)}"
-      %{reason: reason} ->
-        raise "Invalid Durango.Repo.Auth response #{reason} for #{repo.__config__(:name)}"
+      {:ok, %{status_code: code}} ->
+        raise "Invalid Durango.Repo.Auth response #{code} for #{config[:name]}"
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        raise "Invalid Durango.Repo.Auth response #{inspect reason} for #{config[:name]}"
     end
     |> case do
       %{"jwt" => token} ->
@@ -33,12 +33,12 @@ defmodule Durango.Repo.Auth do
   end
 
   def store_token(repo, token) do
-    :ets.insert(__MODULE__, {repo.__config__(:name), token})
+    :ets.insert(__MODULE__, {repo.__config__().name, token})
     :ok
   end
 
   def fetch_token(repo) do
-    name = repo.__config__(:name)
+    name = repo.__config__().name
     :ets.lookup(__MODULE__, name)
     |> case do
       [{^name, token}] ->
@@ -51,7 +51,7 @@ defmodule Durango.Repo.Auth do
   def header!(repo) do
     case fetch_token(repo) do
       nil ->
-        raise "Durango.Repo.Auth had no token for #{repo.__config__(:name)}"
+        raise "Durango.Repo.Auth had no token for #{repo.__config__().name}"
       token when is_binary(token) ->
         {"Authorization", "Bearer "<>token}
     end

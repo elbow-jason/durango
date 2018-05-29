@@ -97,7 +97,6 @@ defmodule Durango.Dsl.BoundVar do
     {item, bound_vars}
   end
   def reduce_bound_vars({atom, meta, args}, bound_vars) when is_atom(atom) and is_list(meta) and is_list(args) do
-    # IO.inspect({atom, args}, label: :reduce_bound_vars)
     {args, bound_vars} = reduce_bound_vars(args, bound_vars)
     {{atom, meta, args}, bound_vars}
   end
