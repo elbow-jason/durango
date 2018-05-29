@@ -18,8 +18,8 @@ defmodule Durango.Repo.Auth do
     case HTTPoison.request(:post, url, body, [], []) do
       {:ok, %{status_code: 200, body: body}} ->
         Jason.decode!(body)
-      {:ok, %{status_code: code}} ->
-        raise "Invalid Durango.Repo.Auth response #{code} for #{config[:name]}"
+      {:ok, %{status_code: code} = resp} ->
+        raise "Invalid Durango.Repo.Auth response #{code} for #{config[:name]}. Response: #{inspect resp}"
       {:error, %HTTPoison.Error{reason: reason}} ->
         raise "Invalid Durango.Repo.Auth response #{inspect reason} for #{config[:name]}"
     end
