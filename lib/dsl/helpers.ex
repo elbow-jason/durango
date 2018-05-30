@@ -1,5 +1,9 @@
 defmodule Durango.Dsl.Helpers do
-  alias Durango.Dsl.DotAccess
+  alias Durango.{
+    Dsl.DotAccess,
+    Dsl,
+    Query,
+  }
 
   def extract_labels(labels) when is_list(labels) do
     labels
@@ -47,11 +51,11 @@ defmodule Durango.Dsl.Helpers do
   def stringify({item, _, nil}) when is_atom(item) do
     to_string(item)
   end
-  def stringify({item, _, args}) when is_atom(item) and is_list(args) do
+  def stringify({item, _, args} = ast) when is_atom(item) and is_list(args) do
     args_count = length(args)
     case Durango.Dsl.Function.Names.functions() |> Keyword.get(item) do
       start..fin when args_count >= start and args_count <= fin ->
-        render_function(item, args)
+        Durango.Dsl.parse_expr(%Query{}, ast) |> to_string
       other ->
         raise "Unrecognized function #{item} with arity #{args_count} found: #{inspect other}"
     end

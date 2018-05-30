@@ -1000,4 +1000,15 @@ defmodule DurangoQueryTest do
     """)
   end
 
+  test "can handle bound vars in a function call" do
+    addr = "12345"
+    q = Durango.query([
+      for: property in fulltext(:assessor_properties, "mail_address", ^addr),
+      return: property
+    ])
+    assert q |> to_string |> normalize == normalize("""
+    FOR property IN FULLTEXT(assessor_properties, \"mail_address\", @addr) RETURN property
+    """)
+  end
+
 end
