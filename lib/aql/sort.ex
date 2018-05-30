@@ -1,5 +1,6 @@
 defmodule Durango.AQL.Sort do
 
+  alias Durango.{Query, Dsl}
 
   defmacro inject_parser() do
     quote do
@@ -42,6 +43,11 @@ defmodule Durango.AQL.Sort do
   end
   def render_items(%module{} = item) do
     module.to_aql(item)
+  end
+  def render_items({_func, _meta, _args} = ast) do
+    %Query{}
+    |> Dsl.parse_expr(ast)
+    |> to_string
   end
 
 end

@@ -982,5 +982,22 @@ defmodule DurangoQueryTest do
     assert q |> to_string() |> normalize == expected
   end
 
+  test "can handle sort with a subfunction" do
+    q = Durango.query([
+      for: property in :assessor_properties,
+      let: lon = property.location.longitude,
+      let: lat = property.location.latitude,
+      sort: geo_distance([lat, lon], [40.78, -73.97]),
+      return: property
+    ])
+
+    assert q |> to_string |> normalize == normalize("""
+    FOR property IN assessor_properties
+    LET lon = property.location.longitude
+    LET lat = property.location.latitude
+    SORT GEO_DISTANCE([ lat , lon ], [ 40.78 , -73.97 ])
+    RETURN property
+    """)
+  end
 
 end
