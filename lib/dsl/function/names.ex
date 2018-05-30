@@ -162,6 +162,17 @@ defmodule Durango.Dsl.Function.Names do
     passthru:             1,
     sleep:                1,
     v8:                   1,
+    # https://docs.arangodb.com/devel/AQL/Functions/Geo.html#geo-utility-functions
+    distance: 4, # DISTANCE(latitude1, longitude1, latitude2, longitude2) -> distance
+    geo_contains: 2, # GEO_CONTAINS(geoJsonA, geoJsonB) → bool
+    geo_distance: 2, # GEO_DISTANCE(geoJsonA, geoJsonB) → distance
+    geo_equals: 2, # GEO_EQUALS(geoJsonA, geoJsonB) → bool
+    geo_intersects: 2, # GEO_INTERSECTS(geoJsonA, geoJsonB) → bool
+    geo_linestring: 1,  # GEO_LINESTRING(points) → geoJson
+    geo_multilinestring: 1, # GEO_MULTILINESTRING(points) → geoJson
+    geo_multipoint: 1, # GEO_MULTIPOINT(points) → geoJson
+    geo_point: 2, # GEO_POINT(longitude, latitude) → geoJson
+    geo_polygon: 1, # GEO_POLYGON(points) → geoJson
   ]
 
   def functions(), do: @functions

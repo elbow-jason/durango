@@ -190,6 +190,10 @@ defmodule Durango.Dsl do
     |> Query.append_tokens("=")
     |> Dsl.parse_expr(right)
   end
+
+  def parse_expr(%Query{} = q, {:-, _, [num]}) when is_number(num) do
+    Query.append_tokens(q, "-#{num}")
+  end
   def parse_expr(%Query{} = q, {{:., _, [{base, _, nil}, attr]}, _, []}) do
     Query.ensure_in_locals!(q, base)
     Query.append_tokens(q, Dsl.Helpers.stringify(base) <> "." <> Dsl.Helpers.stringify(attr))
@@ -205,7 +209,26 @@ defmodule Durango.Dsl do
     Query.append_tokens(q, Dsl.Helpers.stringify(item))
   end
   def parse_expr(%Query{} = q, items) when is_list(items) do
-    Dsl.parse_query(q, items)
+    q
+    |> Query.append_tokens("[")
+    |> parse_list(items)
+    |> Query.append_tokens("]")
+  end
+
+  defp parse_list(%Query{} = q, [item]) do
+    # no comma
+    parse_expr(q, item)
+  end
+  defp parse_list(%Query{} = q, [ head | rest ]) do
+    # comma after
+    q
+    |> parse_expr(head)
+    |> Query.append_tokens(", ")
+    |> parse_list(rest)
+  end
+  defp parse_list(%Query{} = q, []) do
+    # do nothing
+    q
   end
 
   def reduce_assignments(%Query{} = q, expressions, sep) when is_list(expressions) and is_binary(sep) do

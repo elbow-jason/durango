@@ -960,4 +960,27 @@ defmodule DurangoQueryTest do
     assert to_string(q) == expected
   end
 
+  test "query can handle functions calls in a LET" do
+    q = Durango.query([
+      let: polygon = %{
+        type: "Polygon",
+        coordinates: [[[-11.5, 23.5], [-10.5, 26.1], [-11.2, 27.1], [-11.5, 23.5]]]
+      },
+      for: p in :persons,
+      let: distance = geo_distance(p.geometry, polygon),
+      return: distance,
+    ])
+    expected = normalize """
+    LET polygon = {
+      type: "Polygon",
+      coordinates: [ [ [ -11.5 , 23.5 ] , [ -10.5 , 26.1 ] , [ -11.2 , 27.1 ] , [ -11.5 , 23.5 ] ] ]
+    }
+    FOR p IN persons
+      LET distance = GEO_DISTANCE(p.geometry, polygon)
+      RETURN distance
+    """
+    assert q |> to_string() |> normalize == expected
+  end
+
+
 end
