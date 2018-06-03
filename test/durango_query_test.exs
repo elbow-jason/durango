@@ -1035,5 +1035,23 @@ defmodule DurangoQueryTest do
       }
     }
   end
+  test "can handle a variable as a limit" do
+    limit = 100
+    q = Durango.query([
+      for: property in :assessor_properties,
+      limit: ^limit,
+      return: property,
+    ])
+    assert q |> to_string |> normalize == normalize("""
+    FOR property IN assessor_properties LIMIT @limit RETURN property
+    """)
+    assert q.bound_variables == %{
+      limit: %Durango.Dsl.BoundVar{
+        key: :limit,
+        keytype: nil,
+        value: 100
+      }
+    }
+  end
 
 end
