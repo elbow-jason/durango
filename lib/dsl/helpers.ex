@@ -1,7 +1,7 @@
 defmodule Durango.Dsl.Helpers do
   alias Durango.{
     Dsl.DotAccess,
-    Dsl,
+    # Dsl,
     Query,
   }
 
@@ -59,26 +59,6 @@ defmodule Durango.Dsl.Helpers do
       other ->
         raise "Unrecognized function #{item} with arity #{args_count} found: #{inspect other}"
     end
-  end
-
-  defp render_function(name, [coll | rest]) do
-    func_name =
-      name
-      |> to_string
-      |> String.upcase
-    coll = if Durango.Document.is_document?(coll) do
-      coll.__document__(:collection)
-    else
-      coll
-    end
-    rest_args = Enum.map(rest, &inspect/1)
-    func_name <> "(" <> Enum.join([coll | rest_args], ", ") <> ")"
-  end
-  defp render_function(name, []) do
-    name
-    |> to_string
-    |> String.upcase
-    |> Kernel.<>("()")
   end
 
   def var_name({:__aliases__, _, parts}) do

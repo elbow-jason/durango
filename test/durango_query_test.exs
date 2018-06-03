@@ -1011,4 +1011,29 @@ defmodule DurangoQueryTest do
     """)
   end
 
+  test "can handle a tuple with variables as a limit" do
+    offset = 5
+    limit = 100
+    q = Durango.query([
+      for: property in :assessor_properties,
+      limit: {^offset, ^limit},
+      return: property,
+    ])
+    assert q |> to_string |> normalize == normalize("""
+    FOR property IN assessor_properties LIMIT @offset , @limit RETURN property
+    """)
+    assert q.bound_variables == %{
+      limit: %Durango.Dsl.BoundVar{
+        key: :limit,
+        keytype: nil,
+        value: 100
+      },
+      offset: %Durango.Dsl.BoundVar{
+        key: :offset,
+        keytype: nil,
+        value: 5
+      }
+    }
+  end
+
 end

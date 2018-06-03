@@ -32,8 +32,11 @@ defmodule Durango.AQL.Limit do
 
   """
 
-  alias Durango.Query
-  alias Durango.Dsl.BoundVar
+  alias Durango.{
+    Query,
+    Dsl,
+    Dsl.BoundVar,
+  }
 
   defmacro inject_parser() do
     quote do
@@ -41,15 +44,15 @@ defmodule Durango.AQL.Limit do
       alias Durango.Dsl
 
       def parse_query(%Query{} = q, [{:limit, {offset, count}} | rest]) do
-        limit_token = Durango.AQL.Limit.render_args(offset, count)
         q
-        |> Query.append_tokens(["LIMIT", limit_token])
+        |> Query.append_tokens("LIMIT")
+        |> Durango.AQL.Limit.append_args(offset, count)
         |> Dsl.parse_query(rest)
       end
       def parse_query(%Query{} = q, [{:limit, count} | rest ]) do
-        limit_token = Durango.AQL.Limit.render_args(count)
         q
-        |> Query.append_tokens(["LIMIT", limit_token])
+        |> Query.append_tokens("LIMIT")
+        |> Durango.AQL.Limit.append_args(count)
         |> Dsl.parse_query(rest)
       end
     end
@@ -59,24 +62,26 @@ defmodule Durango.AQL.Limit do
 
   @doc """
 
-    iex> Durango.AQL.Limit.render_args(5)
-    "5"
-
-    iex> Durango.AQL.Limit.render_args(%Durango.Dsl.BoundVar{key: :thing})
-    "@thing"
-
-    iex> Durango.AQL.Limit.render_args(100, 10)
-    "100, 10"
-
   """
-  def render_args(num) when is_integer(num) do
-    to_string(num)
+  def append_args(%Query{} = q, num) when is_integer(num) do
+    Query.append_tokens(q, to_string(num))
   end
-  def render_args(%BoundVar{} = var) do
-    BoundVar.to_aql(var)
+  def append_args(%Query{} = q, %BoundVar{} = var) do
+    Query.append_tokens(q, BoundVar.to_aql(var))
   end
-  def render_args(offset, count) do
-    render_args(offset) <> ", " <> render_args(count)
+  def append_args(%Query{} = q, {:^, _, [{name, _, nil}]} = quoted) when is_atom(name) do
+    {bv, _params_map} = Durango.Dsl.BoundVar.from_quoted(quoted)
+    q
+    |> Query.put_bound_var(bv)
+    |> Query.append_tokens("@" <> to_string(name))
   end
+
+  def append_args(q, offset, count) do
+    q
+    |> append_args(offset)
+    |> Query.append_tokens(",")
+    |> append_args(count)
+  end
+
 
 end
